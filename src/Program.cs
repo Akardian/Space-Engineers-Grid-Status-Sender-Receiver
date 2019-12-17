@@ -25,8 +25,8 @@ namespace IngameScript
 
         private TextUtil _textUtil;
 
-        private IMyRadioAntenna _radioAntenna;
-        private string _tag = "c1";
+        private GridCommunication _gridCommunication;
+        
         private bool _sender = true;
         private long _count = 0;
 
@@ -36,16 +36,17 @@ namespace IngameScript
             {
                 //Echo = text => {};
                 _textUtil = new TextUtil(this);
-                if(_sender)
+                if (_sender)
                 {
                     _textUtil.AddLCD("LCD-1");
                     _textUtil.AddLCD("LCD-2");
                     _textUtil.TextContentOn();
                     _textUtil.SetFont(TextUtil.FontColor.Green, 1f);
 
-                    _radioAntenna = GridTerminalSystem.GetBlockWithName("Antenna S") as IMyRadioAntenna;
+                    _gridCommunication = new GridCommunication(this, GridCommunication.ClientType.Sender, "channel-1");
+                    _gridCommunication.SetAntennaBLock("Antenna S");
 
-                    _textUtil.Header = $"LCD Header Sender\nAttached PB: {_radioAntenna.AttachedProgrammableBlock.ToString()}\nProgammable B: {IGC.Me.ToString()}";
+                    _textUtil.Header = $"LCD Header Sender\n";
                 } else
                 {
                     _textUtil.AddLCD("LCD-3");
@@ -53,9 +54,10 @@ namespace IngameScript
                     _textUtil.TextContentOn();
                     _textUtil.SetFont(TextUtil.FontColor.Green, 1f);
 
-                    _radioAntenna = GridTerminalSystem.GetBlockWithName("Antenna R") as IMyRadioAntenna;
+                    _gridCommunication = new GridCommunication(this, GridCommunication.ClientType.Reciever, "channel-1");
+                    _gridCommunication.SetAntennaBLock("Antenna R");
 
-                    _textUtil.Header = $"LCD Header Reciever\nAttached PB: {_radioAntenna.AttachedProgrammableBlock.ToString()}\nProgammable B: {IGC.Me.ToString()}";
+                    _textUtil.Header = $"LCD Header Receiver\n";
                 }
 
                 Runtime.UpdateFrequency = UpdateFrequency.Update100;
@@ -73,40 +75,19 @@ namespace IngameScript
 
         void RunContinuousLogic()
         {
-            if (_sender)
-            {
-                IGC.SendBroadcastMessage(_tag, _count.ToString(), TransmissionDistance.TransmissionDistanceMax);
-                IGC.RegisterBroadcastListener(_tag);
+             if (_sender)
+             {
+                _gridCommunication.Send(_count.ToString());
 
                 _textUtil.Echo(_count.ToString(), false);
                 _count++;
-            }
-            else
-            {
-                IGC.RegisterBroadcastListener(_tag);
+             }
+             else
+             {
+                string msg = _gridCommunication.Receive();
 
-                List<IMyBroadcastListener> listeners = new List<IMyBroadcastListener>();
-                IGC.GetBroadcastListeners(listeners);
-
-                if (listeners[0].HasPendingMessage)
-                {
-                    MyIGCMessage message = new MyIGCMessage();
-
-                    message = listeners[0].AcceptMessage();
-
-                    string messagetext = message.Data.ToString();
-
-                    string messagetag = message.Tag;
-
-                    long sender = message.Source;
-
-                    //Do something with the information!
-                    _textUtil.Echo("Message received with tag" + messagetag + "\n\r", false);
-                    _textUtil.Echo("from address " + sender.ToString() + ": \n\r", true);
-                    _textUtil.Echo(messagetext, true);
-                }
-
-            }
+                _textUtil.Echo(msg, false);
+             }
         }
 
         void RunCommand(string argument)
