@@ -21,10 +21,14 @@ namespace IngameScript
 {
     partial class Program : MyGridProgram
     {
+        private const UpdateType COMMAND_UPDATE = UpdateType.Trigger | UpdateType.Terminal;
+
         private TextUtil _textUtil;
 
         private IMyRadioAntenna _radioAntenna;
-        private string _channel = "c1";
+        private string _tag = "c1";
+        private bool _sender = true;
+        private long _count = 0;
 
         public Program()
         {
@@ -32,18 +36,29 @@ namespace IngameScript
             {
                 //Echo = text => {};
                 _textUtil = new TextUtil(this);
-                _textUtil.AddLCD("LCD-1");
-                _textUtil.AddLCD("LCD-2");
-                _textUtil.AddLCD("Not Found LCD");
-                _textUtil.TextContentOn();
-                _textUtil.SetFont(TextUtil.FontColor.Green, 1f);
-                _textUtil.Header = "LCD Header";
+                if(_sender)
+                {
+                    _textUtil.AddLCD("LCD-1");
+                    _textUtil.AddLCD("LCD-2");
+                    _textUtil.TextContentOn();
+                    _textUtil.SetFont(TextUtil.FontColor.Green, 1f);
 
-                _radioAntenna = GridTerminalSystem.GetBlockWithName("Antenna S") as IMyRadioAntenna;
+                    _radioAntenna = GridTerminalSystem.GetBlockWithName("Antenna S") as IMyRadioAntenna;
 
-                _textUtil.Echo($"Attached PB: {_radioAntenna.AttachedProgrammableBlock.ToString()}");
-                _textUtil.Echo($"Progammable B: {IGC.Me.ToString()}");
-                
+                    _textUtil.Header = $"LCD Header Sender\nAttached PB: {_radioAntenna.AttachedProgrammableBlock.ToString()}\nProgammable B: {IGC.Me.ToString()}";
+                } else
+                {
+                    _textUtil.AddLCD("LCD-3");
+                    _textUtil.AddLCD("LCD-4");
+                    _textUtil.TextContentOn();
+                    _textUtil.SetFont(TextUtil.FontColor.Green, 1f);
+
+                    _radioAntenna = GridTerminalSystem.GetBlockWithName("Antenna R") as IMyRadioAntenna;
+
+                    _textUtil.Header = $"LCD Header Reciever\nAttached PB: {_radioAntenna.AttachedProgrammableBlock.ToString()}\nProgammable B: {IGC.Me.ToString()}";
+                }
+
+                Runtime.UpdateFrequency = UpdateFrequency.Update100;
             }
             catch (Exception e)
             {
@@ -56,11 +71,61 @@ namespace IngameScript
         {
         }
 
+        void RunContinuousLogic()
+        {
+            if (_sender)
+            {
+                IGC.SendBroadcastMessage(_tag, _count.ToString(), TransmissionDistance.TransmissionDistanceMax);
+                IGC.RegisterBroadcastListener(_tag);
+
+                _textUtil.Echo(_count.ToString(), false);
+                _count++;
+            }
+            else
+            {
+                IGC.RegisterBroadcastListener(_tag);
+
+                List<IMyBroadcastListener> listeners = new List<IMyBroadcastListener>();
+                IGC.GetBroadcastListeners(listeners);
+
+                if (listeners[0].HasPendingMessage)
+                {
+                    MyIGCMessage message = new MyIGCMessage();
+
+                    message = listeners[0].AcceptMessage();
+
+                    string messagetext = message.Data.ToString();
+
+                    string messagetag = message.Tag;
+
+                    long sender = message.Source;
+
+                    //Do something with the information!
+                    _textUtil.Echo("Message received with tag" + messagetag + "\n\r", false);
+                    _textUtil.Echo("from address " + sender.ToString() + ": \n\r", true);
+                    _textUtil.Echo(messagetext, true);
+                }
+
+            }
+        }
+
+        void RunCommand(string argument)
+        {
+        }
+
         public void Main(string argument, UpdateType updateSource)
         {
+
             try
             {
-                
+                if ((updateSource & COMMAND_UPDATE) != 0)
+                {
+                    RunCommand(argument);
+                }
+                if ((updateSource & UpdateType.Update100) != 0)
+                {
+                    RunContinuousLogic();
+                }
             }
             catch (Exception e)
             {

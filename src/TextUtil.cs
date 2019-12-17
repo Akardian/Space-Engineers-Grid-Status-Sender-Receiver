@@ -112,16 +112,17 @@ namespace IngameScript
             {
                 Echo(msg, true);
             }
+
             public void Echo(string msg, bool append)
             {
-                if(append == false)
+                if(!append)
                 {
                     WriteHeader();
                 }
 
                 foreach(IMyTextPanel lcd in _lcdList)
                 {
-                    lcd?.WriteText($"{msg}\n", append);
+                    lcd?.WriteText($"{msg}\n", true);
                 }
             }
         }
