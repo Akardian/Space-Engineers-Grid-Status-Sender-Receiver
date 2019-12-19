@@ -27,6 +27,7 @@ namespace IngameScript
 
             private readonly ClientType _type;
             private string _tag;
+            private int _checkListener;
 
             private AntennaType _antennaType;
             private IMyLaserAntenna _laserAntenna;
@@ -49,28 +50,37 @@ namespace IngameScript
                 _program = program;
                 _type = type;
                 _tag = tag;
+                _checkListener = 0;
 
                 IGC().RegisterBroadcastListener(_tag);
             }
 
-            public void Send(string msg)
+            public void Send(MessageEntity msg)
             {
-                IGC().SendBroadcastMessage(_tag, msg, TransmissionDistance.TransmissionDistanceMax);
+                IGC().SendBroadcastMessage(_tag, msg.Serialize(), TransmissionDistance.TransmissionDistanceMax);
             }
 
-            public string Receive()
+            public MessageEntity Receive()
             {
-                string message = "";
+                MessageEntity message = null;
 
                 List<IMyBroadcastListener> listeners = new List<IMyBroadcastListener>();
                 IGC().GetBroadcastListeners(listeners);
-                if (listeners[0].HasPendingMessage)
+
+                if(_checkListener >= listeners.Count)
+                {
+                    _checkListener = 0;
+                }
+
+                if (listeners[_checkListener].HasPendingMessage)
                 {
                     MyIGCMessage data = new MyIGCMessage();
-                    data = listeners[0].AcceptMessage();
+                    data = listeners[_checkListener].AcceptMessage();
 
-                    message = data.Data.ToString();
+                    message = new MessageEntity(_program, data.Data);
                 }
+                _checkListener++;
+
                 return message;
             }
 
@@ -89,6 +99,7 @@ namespace IngameScript
                     } else
                     {
                         _program.Echo("Antenna found: Laser Antenna");
+                        //_laserAntenna.AttachedProgrammableBlock = _program.Me.EntityId;
                         _antennaType = AntennaType.Laser;
                         _laserAntenna = laserAntenna;
                         isSet = true;
@@ -96,6 +107,7 @@ namespace IngameScript
                 } else
                 {
                     _program.Echo("Antenna found: Radio Antenna");
+                    //_radioAntenna.AttachedProgrammableBlock = _program.Me.EntityId;
                     _antennaType = AntennaType.Radio;
                     _radioAntenna = radioAntenna;
                     isSet = true;

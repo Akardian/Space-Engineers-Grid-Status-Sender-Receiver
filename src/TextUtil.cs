@@ -54,7 +54,7 @@ namespace IngameScript
                 IMyTextPanel lcd = _program.GridTerminalSystem.GetBlockWithName(lcdName) as IMyTextPanel;
                 if(lcd != null)
                 {
-                    _program.Echo(lcd.CustomName);
+                    _program.Echo($"Add LCD:{lcd.CustomName}");
                     _lcdList.Add(lcd);
                 } else
                 {
@@ -100,12 +100,16 @@ namespace IngameScript
             {
                 if(_header.Length > 0)
                 {
-                    _program.Echo(_header);
                     foreach (IMyTextPanel lcd in _lcdList)
                     {
                         lcd?.WriteText($"{_header}\n\n", false);
                     }
                 }                
+            }
+
+            public void Clear()
+            {
+                Echo("", false);
             }
              
             public void Echo(string msg)
