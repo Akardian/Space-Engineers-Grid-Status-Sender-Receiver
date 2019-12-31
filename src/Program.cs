@@ -4,7 +4,6 @@ using Sandbox.ModAPI.Interfaces;
 using SpaceEngineers.Game.ModAPI.Ingame;
 using System.Collections.Generic;
 using System.Collections;
-using System.Linq;
 using System.Text;
 using System;
 using VRage.Collections;
@@ -26,9 +25,10 @@ namespace IngameScript
         private TextUtil _textUtil;
         private TextUtil _debug;
 
+        private CustomDataIni _ini;
+
         private GridCommunication _gridCommunication;
         
-        private bool _sender = true;
         private long _count = 0;
 
         private MessageEntity _entity1;
@@ -39,42 +39,12 @@ namespace IngameScript
             try
             {
                 _debug = new TextUtil(this);
-                if (_sender) { _debug.AddLCD("Debug S"); }
-                else { _debug.AddLCD("Debug R"); }
-                _debug.TextContentOn();
-                _debug.SetFont(TextUtil.FontColor.Green, 1f);
-                _debug.Header = "Debug\n";
 
-                Echo("");
-                Echo = _debug.Echo;
+                _ini = new CustomDataIni(this);
+                _ini.Load();
+                _ini.SaveToCustomData();                
 
-                _entity1 = new MessageEntity(this, "start");
-                _entity2 = new MessageEntity(this, "start");
-
-                _textUtil = new TextUtil(this);
-                if (_sender)
-                {
-                    _textUtil.AddLCD("LCD-1");
-                    _textUtil.AddLCD("LCD-2");
-                    _textUtil.TextContentOn();
-                    _textUtil.SetFont(TextUtil.FontColor.Green, 1f);
-
-                    _gridCommunication = new GridCommunication(this, GridCommunication.ClientType.Sender, "channel-1");
-                    //_gridCommunication.SetAntennaBLock("Antenna S");
-
-                    _textUtil.Header = $"LCD Header Sender\n";
-                } else
-                {
-                    _textUtil.AddLCD("LCD-3");
-                    _textUtil.AddLCD("LCD-4");
-                    _textUtil.TextContentOn();
-                    _textUtil.SetFont(TextUtil.FontColor.Green, 1f);
-
-                    _gridCommunication = new GridCommunication(this, GridCommunication.ClientType.Reciever, "channel-1");
-                    //_gridCommunication.SetAntennaBLock("Antenna R");
-
-                    _textUtil.Header = $"LCD Header Receiver\n";
-                }
+                Init();
 
                 Runtime.UpdateFrequency = UpdateFrequency.Update100;
             }
@@ -85,13 +55,44 @@ namespace IngameScript
             }
         }
 
+        private void Init()
+        {
+            _debug.AddLCD(_ini.Data.DebugLCD);
+            _debug.TextContentOn();
+            _debug.SetFont(TextUtil.FontColor.Green, 1f);
+            _debug.Header = "Debug";
+
+            Echo("");
+            Echo = _debug.Echo;
+
+            _entity1 = new MessageEntity(this, "start");
+            _entity2 = new MessageEntity(this, "start");
+
+            _textUtil = new TextUtil(this);
+            _textUtil.AddLCD(_ini.Data.LcdOutputList);
+            _textUtil.TextContentOn();
+            _textUtil.SetFont(TextUtil.FontColor.Green, 1f);
+
+            if (_ini.Data.Sender)
+            {
+                _gridCommunication = new GridCommunication(this, GridCommunication.ClientType.Sender, _ini.Data.Channel);
+                _textUtil.Header = $"LCD Header Sender\n";
+            }
+            else
+            {
+                _gridCommunication = new GridCommunication(this, GridCommunication.ClientType.Reciever, _ini.Data.Channel);
+                _textUtil.Header = $"LCD Header Receiver\n";
+            }
+        }
+
         public void Save()
         {
+            _ini.Save();
         }
 
         void RunContinuousLogic()
         {
-             if (_sender)
+             if (_ini.Data.Sender)
              {
                 MessageEntity msg = new MessageEntity(this, _count.ToString()); 
                 
@@ -139,6 +140,16 @@ namespace IngameScript
 
         void RunCommand(string argument)
         {
+            if(argument.Equals("load"))
+            {
+                _ini.LoadCustomData();
+                Init();
+            }
+            if (argument.Equals("clear"))
+            {
+                _ini.Clear();
+                Init();
+            }
         }
 
         public void Main(string argument, UpdateType updateSource)

@@ -25,14 +25,15 @@ namespace IngameScript
         {
             private List<IMyTextPanel> _lcdList;
             private string _header;
+
+            private readonly Program _program;
+            public enum FontColor : byte { Green, Red, Blue }
+
             public string Header
             {
                 get { return _header; }
                 set { _header = value; WriteHeader(); }
             }
-
-            private readonly Program _program;
-            public enum FontColor : byte { Green, Red, Blue }
 
             public TextUtil (Program program, string header)
             {
@@ -49,6 +50,14 @@ namespace IngameScript
                 AddLCD(lcdName);
             }
 
+            public void AddLCD(List<KeyValuePair<string, string>> lcdNameList)
+            {
+                foreach(KeyValuePair<string, string> lcdName in lcdNameList)
+                {
+                    AddLCD(lcdName.Value);
+                }
+            }
+
             public void AddLCD(string lcdName) 
             {
                 IMyTextPanel lcd = _program.GridTerminalSystem.GetBlockWithName(lcdName) as IMyTextPanel;
@@ -58,7 +67,7 @@ namespace IngameScript
                     _lcdList.Add(lcd);
                 } else
                 {
-                    _program.Echo("No LCD found");
+                    _program.Echo($"LCD Not found: {lcdName}");
                 }
             }
 
