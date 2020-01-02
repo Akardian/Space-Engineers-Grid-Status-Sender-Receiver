@@ -25,7 +25,7 @@ namespace IngameScript
         {
             public CustomDataEntity Data { get; private set; }
 
-            private MyIni _ini;
+            private readonly MyIni _ini;
 
             private readonly Program _program;
             private readonly IMyProgrammableBlock _me;
@@ -40,12 +40,6 @@ namespace IngameScript
                 Data = new CustomDataEntity(_program);  
             }
 
-            public void Load()
-            {
-                _ini.TryParse(_program.Storage);
-                Data.LoadData(_ini);
-            }
-
             public void Save()
             {
                 _ini.Clear();
@@ -53,47 +47,48 @@ namespace IngameScript
                 _program.Storage = _ini.ToString();
             }
 
-            public void SaveToCustomData()
+            public void Load()
             {
-                try {
-                    MyIniParseResult result;
-                    if (!_ini.TryParse(_me.CustomData, out result))
-                        throw new Exception(result.ToString());
+                _ini.TryParse(_program.Storage);
+                Data.LoadData(_ini);
+            }
 
+            public bool SaveToCustomData()
+            {
+                MyIniParseResult result;
+                bool succes = _ini.TryParse(_me.CustomData, out result);
+                if (succes)
+                {
                     Data.SaveData(_ini);
 
                     _me.CustomData = _ini.ToString();
-                } catch (Exception)
-                {
-                    _program.Echo($"ERROR: Parse failed, Duplicated Key?");
                 }
-            }
-            public void LoadCustomData()
-            {
-                try
+                else
                 {
-                    MyIniParseResult result;
-                    if (!_ini.TryParse(_me.CustomData, out result))
-                        throw new Exception(result.ToString());
-
+                    _program.Echo($"ERROR: Parse failed, Duplicated LCD Key?");
+                }
+                return succes;
+            }
+            public bool LoadCustomData()
+            {
+                MyIniParseResult result;
+                bool succes = _ini.TryParse(_me.CustomData, out result);
+                if (succes)
+                {
                     Data.LoadData(_ini);
-                }
-                catch (Exception)
+                } else
                 {
-                    _program.Echo($"ERROR: Parse failed, Duplicated Key?");
+                    _program.Echo($"ERROR: Parse failed, Duplicated LCD Key?");
                 }
+                return succes;
             }
 
-            public void Clear()
+            public void SetDefaultValues()
             {
-                _ini.Clear();
-                Data.LoadData(_ini);
-
-                _program.Storage = _ini.ToString();
-                _me.CustomData = _ini.ToString();
-
-                Load();
-                SaveToCustomData();
+                    _ini.Clear();
+                    Data.SetDefault(_ini);
+                    _me.CustomData = "";
+                    _me.CustomData = _ini.ToString();
             }
         }
     }

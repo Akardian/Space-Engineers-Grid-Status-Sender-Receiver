@@ -25,73 +25,64 @@ namespace IngameScript
         {
             public string ConifgSectionName { get; set; }
             public string LCDSectiongName { get; set; }
-
             public string Channel { get; set; }
             public string ChannelName { get; set; }
-
             public int MaxSenderOnLCD { get; set; }
             public string MaxSenderOnLCDName { get; set; }
-
             public bool Sender { get; set; }
             public string SenderName { get; set; }
-
             public string DebugLCD { get; set; }
             public string DebugLCDName { get; set; }
 
-            public List<KeyValuePair<string, string>> LcdOutputList { get; set; }
+            private const string _defaultChannel = "channel-0";
+            private const bool _defaultSender = false;
+            private const string _defaultDebugLCD = "debug-0";
+            private const int _defaultMaxLCDEntries = 3;
+            private const string _defaultLCD = "LCD-0";
 
-            private Program _program;
+            public List<KeyValuePair<string, string>> LcdOutputList { get; private set; }
+            public List<MyIniKey> KeyList { get; private set; }
 
-            public CustomDataEntity(Program program, string conifgSectionName, string lcdSectionName, string channel, bool sender, string debugLCD, int maxSenderOnLCD)
+            private readonly Program _program;
+
+            public CustomDataEntity(Program program, string conifgSectionName, string lcdSectionName)
             {
                 _program = program;
 
                 ConifgSectionName = conifgSectionName;
                 LCDSectiongName = lcdSectionName;
 
-                Channel = channel;
                 ChannelName = "Channel";
-
-                Sender = sender;
                 SenderName = "Sender";
-
-                DebugLCD = debugLCD;
                 DebugLCDName = "Debug LCD";
-
-                MaxSenderOnLCD = maxSenderOnLCD;
                 MaxSenderOnLCDName = "Max sender on LCD";
 
                 LcdOutputList = new List<KeyValuePair<string, string>>();
+                KeyList = new List<MyIniKey>();
             }
 
-            public CustomDataEntity(Program program) : this(program, "Config", "LCDs", "channel-0", false, "Debug-0", 3) { }
+            public CustomDataEntity(Program program) : this(program, "Config", "LCDs") { }
 
             public void LoadData(MyIni ini)
             {
-                Channel = ini.Get(ConifgSectionName, ChannelName).ToString("channel-0");
-                Sender = ini.Get(ConifgSectionName, SenderName).ToBoolean(false);
-                DebugLCD = ini.Get(ConifgSectionName, DebugLCDName).ToString("Debug-0");
-                MaxSenderOnLCD = ini.Get(ConifgSectionName, MaxSenderOnLCDName).ToInt32(3);
+                Channel = ini.Get(ConifgSectionName, ChannelName).ToString(_defaultChannel);
+                Sender = ini.Get(ConifgSectionName, SenderName).ToBoolean(_defaultSender);
+                DebugLCD = ini.Get(ConifgSectionName, DebugLCDName).ToString(_defaultDebugLCD);
+                MaxSenderOnLCD = ini.Get(ConifgSectionName, MaxSenderOnLCDName).ToInt32(_defaultMaxLCDEntries);
 
                 LcdOutputList.Clear();
-                List<MyIniKey> keyList = new List<MyIniKey>();
-                ini.GetKeys(LCDSectiongName, keyList);
-               
-                _program.Echo($"Key List: {keyList.Any()}");
+                KeyList.Clear();
+                ini.GetKeys(LCDSectiongName, KeyList);
 
-                if (keyList.Any())
-                {   
-                    foreach (MyIniKey key in keyList)
+                _program.Echo($"Key list has entry: {KeyList.Any()}");
+                if (KeyList.Any())
+                {
+                    foreach (MyIniKey key in KeyList)
                     {
-                        try
-                        {
-                            LcdOutputList.Add(new KeyValuePair<string, string>(
-                                key.Name,
-                                ini.Get(LCDSectiongName, key.Name).ToString("DefaultValue")));
-                        } catch (Exception e)
-                        {
-                            _program.Echo($"ERROR: Could not load LCD Name: {e}");
-                        }
+                        _program.Echo($"Section: {key.Section} Name: {key.Name}");
+                        LcdOutputList.Add(new KeyValuePair<string, string>(
+                            key.Name,
+                            ini.Get(LCDSectiongName, key.Name).ToString("DefaultValue")));
                     }
                 } else
                 {
@@ -114,6 +105,16 @@ namespace IngameScript
                 {
                     ini.Set(LCDSectiongName, lcdOutput.Key, lcdOutput.Value);
                 }
+            }
+
+            public void SetDefault(MyIni ini)
+            {
+                ini.Set(ConifgSectionName, ChannelName, _defaultChannel);
+                ini.Set(ConifgSectionName, SenderName, _defaultSender);
+                ini.Set(ConifgSectionName, DebugLCDName, _defaultDebugLCD);
+                ini.Set(ConifgSectionName, MaxSenderOnLCDName, _defaultMaxLCDEntries);
+                ini.Set(LCDSectiongName, _defaultLCD, _defaultLCD);
+
             }
         }
     }

@@ -29,18 +29,12 @@ namespace IngameScript
         private Sender _sender;
         private Receiver _reciever;
 
+        private bool running;
+
         public Program()
         {
             try
             {
-                _debug = new LCDUtil(this);
-                Echo("");
-                Echo = _debug.Echo;
-
-                _ini = new CustomDataIni(this);
-                _ini.Load();
-                _ini.SaveToCustomData();                
-
                 Init();
 
                 Runtime.UpdateFrequency = UpdateFrequency.Update100;
@@ -52,52 +46,68 @@ namespace IngameScript
             }
         }
 
-        private void Init()
+        public void Init()
         {
-            _debug.Add(_ini.Data.DebugLCD);
-            _debug.TextContentOn();
-            _debug.SetFont(LCDUtil.FontColor.Green, 1f);
-            _debug.Echo("", false);
-
-            if (_ini.Data.Sender)
+            running = false;
+            _ini = new CustomDataIni(this);
+            if (_ini.LoadCustomData())
             {
-                _sender = new Sender(this, _ini);
-            }
-            else
-            {
-                _reciever = new Receiver(this, _ini);
-            }
-        }
+                if (!_ini.SaveToCustomData())
+                {
+                    throw new Exception($"Exception: Could not save to custom data\n---");
+                }
 
-        public void Save()
-        {
-            _ini.Save();
+                _debug = new LCDUtil(this);
+                _debug.Add(_ini.Data.DebugLCD);
+                _debug.TextContentOn();
+                _debug.SetFont(LCDUtil.FontColor.Green, 1f);
+                _debug.Echo("", false);
+
+                Echo = _debug.Echo;
+
+                if (_ini.Data.Sender)
+                {
+                    _sender = new Sender(this, _ini);
+                }
+                else
+                {
+                    _reciever = new Receiver(this, _ini);
+                }
+
+                running = true;
+            } else
+            {
+                Echo($"\nUse the Argument \"default\" to reset\n the custom data");
+            }
         }
 
         void RunContinuousLogic()
         {
-             if (_ini.Data.Sender)
-             {
-                _sender.Run();
-             }
-             else
-             {
-                _reciever.Run();
+            if (running)
+            {
+                if (_ini.Data.Sender)
+                {
+                    _sender.Run();
+                }
+                else
+                {
+                    _reciever.Run();
+                }
             }
         }
 
         void RunCommand(string argument)
         {
-            if(argument.Equals("load"))
+            if(argument.Equals("default"))
             {
-                _ini.LoadCustomData();
+                _ini.SetDefaultValues();
                 Init();
             }
-            if (argument.Equals("clear"))
-            {
-                _ini.Clear();
-                Init();
-            }
+        }
+
+        public void Save()
+        {
+
         }
 
         public void Main(string argument, UpdateType updateSource)
