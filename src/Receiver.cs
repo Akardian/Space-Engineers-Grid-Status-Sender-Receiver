@@ -23,7 +23,7 @@ namespace IngameScript
     {
         public class Receiver
         {
-            private List<KeyValuePair<string,LCDUtil>> _lcdUtil;
+            private Dictionary<string,LCDUtil> _lcdUtil;
             private List<SenderEntity> _senderList;
 
             private GridCommunication _gridCommunication;
@@ -34,25 +34,27 @@ namespace IngameScript
             public Receiver(Program program, CustomDataIni ini)
             {
                 _program = program;
-                _lcdUtil = new List<KeyValuePair<string, LCDUtil>>();
+                _lcdUtil = new Dictionary<string, LCDUtil>();
 
                 _gridCommunication = new GridCommunication(program, GridCommunication.ClientType.Reciever, ini.Data.Channel);
                 _senderList = new List<SenderEntity>();
 
                 MaxSenderOnLCD = ini.Data.MaxSenderOnLCD;
 
-                foreach (KeyValuePair<string, string> lcdList in ini.Data.LcdOutputList)
+                foreach (KeyValuePair<string, string> lcd in ini.Data.LcdOutputList)
                 {
-                    _program.Echo($"Out LCD: {lcdList.Key}, {lcdList.Value}");
+                    _program.Echo($"Out LCD: {lcd.Key}, {lcd.Value}");
+                    if (!_lcdUtil.ContainsKey(lcd.Value))
+                    {
+                        LCDUtil newLCD = new LCDUtil(_program, "");
+                        newLCD.Add(lcd.Value);
+                        newLCD.TextContentOn();
+                        newLCD.SetFont(LCDUtil.FontColor.Green, 1f);
+                        newLCD.Header = $"-- Receiver --\n";
+                        newLCD.Update();
 
-                    LCDUtil newLCD = new LCDUtil(_program, "");
-                    newLCD.Add(lcdList.Value);
-                    newLCD.TextContentOn();
-                    newLCD.SetFont(LCDUtil.FontColor.Green, 1f);
-                    newLCD.Header = $"-- Receiver --\n";
-
-                    _lcdUtil.Add(new KeyValuePair<string, LCDUtil>(lcdList.Value, newLCD));
-
+                        _lcdUtil.Add(lcd.Value, newLCD);
+                    }
                 }
             }
 
@@ -71,7 +73,8 @@ namespace IngameScript
                         KeyValuePair<string, LCDUtil> lcd = new KeyValuePair<string, LCDUtil>("-1", null);
                         for (int i = 0 ; lcd.Value == null && _lcdUtil.Count > i; i++)
                         {
-                            KeyValuePair<string, LCDUtil> selectedLcd = _lcdUtil[i];
+                            KeyValuePair<string, LCDUtil> selectedLcd = _lcdUtil.ElementAt(i);
+                            _program.Echo($"Sender Count: {selectedLcd.Value.SenderCount} Max: {MaxSenderOnLCD}");
                             if (selectedLcd.Value.SenderCount < MaxSenderOnLCD)
                             {
                                 lcd = selectedLcd;
@@ -92,11 +95,11 @@ namespace IngameScript
                                 lcd.Value.Write("Message:"),
                                 lcd.Value.Write("")
                             }));
-                            _program.Echo($"New Sender: " +
+                            _program.Echo($"Sender LCD Lines: " +
                                 $" {_senderList.Last().LineNumber[0]}" +
                                 $" {_senderList.Last().LineNumber[1]}" +
                                 $" {_senderList.Last().LineNumber[3]}");
-                            _program.Echo($"New Sender: {_senderList.Last().ID}");
+                            _program.Echo($"Sender ID: {_senderList.Last().ID}");
 
                             lcd.Value.Update();
                         }
