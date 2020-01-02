@@ -29,6 +29,9 @@ namespace IngameScript
             public string Channel { get; set; }
             public string ChannelName { get; set; }
 
+            public int MaxSenderOnLCD { get; set; }
+            public string MaxSenderOnLCDName { get; set; }
+
             public bool Sender { get; set; }
             public string SenderName { get; set; }
 
@@ -39,7 +42,7 @@ namespace IngameScript
 
             private Program _program;
 
-            public CustomDataEntity(Program program, string conifgSectionName, string lcdSectionName, string channel, bool sender, string debugLCD)
+            public CustomDataEntity(Program program, string conifgSectionName, string lcdSectionName, string channel, bool sender, string debugLCD, int maxSenderOnLCD)
             {
                 _program = program;
 
@@ -55,16 +58,20 @@ namespace IngameScript
                 DebugLCD = debugLCD;
                 DebugLCDName = "Debug LCD";
 
+                MaxSenderOnLCD = maxSenderOnLCD;
+                MaxSenderOnLCDName = "Max sender on LCD";
+
                 LcdOutputList = new List<KeyValuePair<string, string>>();
             }
 
-            public CustomDataEntity(Program program) : this(program, "Config", "LCDs", "channel-0", false, "Debug-0") { }
+            public CustomDataEntity(Program program) : this(program, "Config", "LCDs", "channel-0", false, "Debug-0", 3) { }
 
             public void LoadData(MyIni ini)
             {
                 Channel = ini.Get(ConifgSectionName, ChannelName).ToString("channel-0");
                 Sender = ini.Get(ConifgSectionName, SenderName).ToBoolean(false);
                 DebugLCD = ini.Get(ConifgSectionName, DebugLCDName).ToString("Debug-0");
+                MaxSenderOnLCD = ini.Get(ConifgSectionName, MaxSenderOnLCDName).ToInt32(3);
 
                 LcdOutputList.Clear();
                 List<MyIniKey> keyList = new List<MyIniKey>();
@@ -101,6 +108,7 @@ namespace IngameScript
                 ini.Set(ConifgSectionName, ChannelName, Channel);
                 ini.Set(ConifgSectionName, SenderName, Sender);
                 ini.Set(ConifgSectionName, DebugLCDName, DebugLCD);
+                ini.Set(ConifgSectionName, MaxSenderOnLCDName, MaxSenderOnLCD);
 
                 foreach (KeyValuePair<string, string> lcdOutput in LcdOutputList)
                 {

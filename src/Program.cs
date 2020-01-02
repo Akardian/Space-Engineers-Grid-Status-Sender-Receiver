@@ -22,23 +22,20 @@ namespace IngameScript
     {
         private const UpdateType COMMAND_UPDATE = UpdateType.Trigger | UpdateType.Terminal;
 
-        private TextUtil _textUtil;
-        private TextUtil _debug;
+        private LCDUtil _debug;
 
         private CustomDataIni _ini;
 
-        private GridCommunication _gridCommunication;
-        
-        private long _count = 0;
-
-        private MessageEntity _entity1;
-        private MessageEntity _entity2;
+        private Sender _sender;
+        private Receiver _reciever;
 
         public Program()
         {
             try
             {
-                _debug = new TextUtil(this);
+                _debug = new LCDUtil(this);
+                Echo("");
+                Echo = _debug.Echo;
 
                 _ini = new CustomDataIni(this);
                 _ini.Load();
@@ -57,31 +54,18 @@ namespace IngameScript
 
         private void Init()
         {
-            _debug.AddLCD(_ini.Data.DebugLCD);
+            _debug.Add(_ini.Data.DebugLCD);
             _debug.TextContentOn();
-            _debug.SetFont(TextUtil.FontColor.Green, 1f);
-            _debug.Header = "Debug";
-
-            Echo("");
-            Echo = _debug.Echo;
-
-            _entity1 = new MessageEntity(this, "start");
-            _entity2 = new MessageEntity(this, "start");
-
-            _textUtil = new TextUtil(this);
-            _textUtil.AddLCD(_ini.Data.LcdOutputList);
-            _textUtil.TextContentOn();
-            _textUtil.SetFont(TextUtil.FontColor.Green, 1f);
+            _debug.SetFont(LCDUtil.FontColor.Green, 1f);
+            _debug.Echo("", false);
 
             if (_ini.Data.Sender)
             {
-                _gridCommunication = new GridCommunication(this, GridCommunication.ClientType.Sender, _ini.Data.Channel);
-                _textUtil.Header = $"LCD Header Sender\n";
+                _sender = new Sender(this, _ini);
             }
             else
             {
-                _gridCommunication = new GridCommunication(this, GridCommunication.ClientType.Reciever, _ini.Data.Channel);
-                _textUtil.Header = $"LCD Header Receiver\n";
+                _reciever = new Receiver(this, _ini);
             }
         }
 
@@ -94,47 +78,11 @@ namespace IngameScript
         {
              if (_ini.Data.Sender)
              {
-                MessageEntity msg = new MessageEntity(this, _count.ToString()); 
-                
-                _gridCommunication.Send(msg);
-
-                _textUtil.Echo(msg.TimeStamp.ToString(), false);
-                _textUtil.Echo(msg.SenderID.ToString(), true);
-                _textUtil.Echo(msg.Message, true);
-
-                _count++;
+                _sender.Run();
              }
              else
              {
-                MessageEntity msg = _gridCommunication.Receive();
-                while (msg != null)
-                {
-                    if (msg.SenderID == 77207791465205788 && msg.TimeStamp > _entity2.TimeStamp)
-                    {
-                        _textUtil.Echo(_entity1.TimeStamp.ToString(), false);
-                        _textUtil.Echo(_entity1.SenderID.ToString(), true);
-                        _textUtil.Echo(_entity1.Message, true);
-                        _textUtil.Echo("", true);
-                        _textUtil.Echo(msg.TimeStamp.ToString(), true);
-                        _textUtil.Echo(msg.SenderID.ToString(), true);
-                        _textUtil.Echo(msg.Message, true);
-                        _entity2 = msg;
-                    }
-
-                    if (msg.SenderID == 98924271274665271 && msg.TimeStamp > _entity1.TimeStamp)
-                    {
-                        _textUtil.Echo(msg.TimeStamp.ToString(), false);
-                        _textUtil.Echo(msg.SenderID.ToString(), true);
-                        _textUtil.Echo(msg.Message, true);
-                        _textUtil.Echo("", true);
-                        _textUtil.Echo(_entity2.TimeStamp.ToString(), true);
-                        _textUtil.Echo(_entity2.SenderID.ToString(), true);
-                        _textUtil.Echo(_entity2.Message, true);
-                        _entity1 = msg;
-                    }
-
-                    msg = _gridCommunication.Receive();
-                }
+                _reciever.Run();
             }
         }
 

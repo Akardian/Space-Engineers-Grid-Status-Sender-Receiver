@@ -23,24 +23,11 @@ namespace IngameScript
     {
         public class MessageEntity 
         {
-            private DateTime _timeStamp;
-            private long _senderID;
-            private string _message;
+            public DateTime TimeStamp { get; private set; }
+            public long SenderID { get; private set; }
+            public string Message { get; private set; }
 
             private readonly Program _program;
-
-            public DateTime TimeStamp
-            {
-                get { return _timeStamp; }
-            }
-            public long SenderID
-            {
-                get { return _senderID;  }
-            }
-            public string Message
-            {
-                get { return _message;  }
-            }
 
             public MessageEntity(Program program, object serializedMsg)
             {
@@ -54,27 +41,27 @@ namespace IngameScript
 
             public MessageEntity(Program program, DateTime timeStamp, long senderID, string message)
             {
-                _timeStamp = timeStamp;
-                _senderID = senderID;
-                _message = message;
+                TimeStamp = timeStamp;
+                SenderID = senderID;
+                Message = message;
                 _program = program;
             }
 
             public string Serialize()
             {
 
-                return _timeStamp + ";" + _senderID + ";" + _message;
+                return TimeStamp + ";" + SenderID + ";" + Message;
             }
 
-            public void DeSerialize(String msg)
+            private void DeSerialize(String msg)
             {
                 try
                 {
-                    _program.Echo($"DeSerialize: {msg}");
+                    //_program.Echo($"DeSerialize: {msg}");
                     String[] strlist = msg.Split(';');
-                    _timeStamp = Convert.ToDateTime(strlist[0]);
-                    _senderID = Convert.ToInt64(strlist[1]);
-                    _message = strlist[2];
+                    TimeStamp = Convert.ToDateTime(strlist[0]);
+                    SenderID = Convert.ToInt64(strlist[1]);
+                    Message = strlist[2];
                 } catch (Exception e)
                 {
                     _program.Echo($"Exception: {e}\n---");
