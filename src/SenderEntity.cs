@@ -24,16 +24,20 @@ namespace IngameScript
         public class SenderEntity
         {
             public long ID { get; private set; }
-            public DateTime LastUpdate { get; private set; }
-            public string LCD { get; set; }
+            public DateTime LastUpdate { get; set; }
+            public Status CurrentStatus { get; set; }
+            public LCDUtil LCD { get; set; }
             public int[] LineNumber { get; set; }
 
-            public SenderEntity(long id, DateTime lastUpdate, string lcd, int[] lineNumber)
+            public enum Status : byte { Connected, LostConnection }
+
+            public SenderEntity(long id, DateTime lastUpdate, LCDUtil lcd, Status status, int[] lineNumber)
             {
                 ID = id;
                 LastUpdate = lastUpdate;
                 LCD = lcd;
                 LineNumber = lineNumber;
+                CurrentStatus = status;
             }
         }
     }

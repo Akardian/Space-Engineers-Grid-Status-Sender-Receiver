@@ -49,7 +49,6 @@ namespace IngameScript
 
             public string Serialize()
             {
-
                 return TimeStamp + ";" + SenderID + ";" + Message;
             }
 

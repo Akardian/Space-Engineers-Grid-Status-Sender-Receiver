@@ -23,13 +23,16 @@ namespace IngameScript
     {
         public class Receiver
         {
-            private Dictionary<string,LCDUtil> _lcdUtil;
-            private List<SenderEntity> _senderList;
+            private readonly Dictionary<string,LCDUtil> _lcdUtil;
+            private readonly List<SenderEntity> _senderList;
 
-            private GridCommunication _gridCommunication;
-            private int MaxSenderOnLCD;
+            private readonly GridCommunication _gridCommunication;
+            private readonly int _maxSenderOnLCD;
+            private readonly int _timeoutTime;
 
-            private Program _program;
+            private int _checkConnection;
+
+            private readonly Program _program;
 
             public Receiver(Program program, CustomDataIni ini)
             {
@@ -39,7 +42,9 @@ namespace IngameScript
                 _gridCommunication = new GridCommunication(program, GridCommunication.ClientType.Reciever, ini.Data.Channel);
                 _senderList = new List<SenderEntity>();
 
-                MaxSenderOnLCD = ini.Data.MaxSenderOnLCD;
+                _maxSenderOnLCD = ini.Data.MaxSenderOnLCD;
+                _timeoutTime = ini.Data.TimeOutTime;
+                _program.Echo($"TimeoutTime: {_timeoutTime}");
 
                 foreach (KeyValuePair<string, string> lcd in ini.Data.LcdOutputList)
                 {
@@ -70,56 +75,107 @@ namespace IngameScript
 
                     if (senderEntity == null)
                     {
-                        KeyValuePair<string, LCDUtil> lcd = new KeyValuePair<string, LCDUtil>("-1", null);
-                        for (int i = 0 ; lcd.Value == null && _lcdUtil.Count > i; i++)
-                        {
-                            KeyValuePair<string, LCDUtil> selectedLcd = _lcdUtil.ElementAt(i);
-                            _program.Echo($"Sender Count: {selectedLcd.Value.SenderCount} Max: {MaxSenderOnLCD}");
-                            if (selectedLcd.Value.SenderCount < MaxSenderOnLCD)
-                            {
-                                lcd = selectedLcd;
-                                _program.Echo($"Select LCD: {lcd.Key}");
-                                selectedLcd.Value.SenderCount++;
-                            }
-                        }
-
-                        if (lcd.Value != null) 
-                        {
-                            _senderList.Add(new SenderEntity(
-                            msg.SenderID,
-                            msg.TimeStamp,
-                            lcd.Key,
-                            new int[] {
-                                lcd.Value.Write("TimeStamp"),
-                                lcd.Value.Write("SenderID"),
-                                lcd.Value.Write("Message:"),
-                                lcd.Value.Write("")
-                            }));
-                            _program.Echo($"Sender LCD Lines: " +
-                                $" {_senderList.Last().LineNumber[0]}" +
-                                $" {_senderList.Last().LineNumber[1]}" +
-                                $" {_senderList.Last().LineNumber[3]}");
-                            _program.Echo($"Sender ID: {_senderList.Last().ID}");
-
-                            lcd.Value.Update();
-                        }
-                            
+                        AddSender(msg);                            
                     } else
                     {
-                        foreach (KeyValuePair<string, LCDUtil> lcd in _lcdUtil)
-                        {
-                            if (lcd.Value != null && lcd.Key.Equals(senderEntity.LCD))
-                            {
-                                lcd.Value.Replace(senderEntity.LineNumber[0], msg.TimeStamp.ToString());
-                                lcd.Value.Replace(senderEntity.LineNumber[1], msg.SenderID.ToString());
-                                lcd.Value.Replace(senderEntity.LineNumber[3], msg.Message);
-                                lcd.Value.Update();
-                            }
-                        }
+                        UpdateSender(msg, senderEntity);
                     }
 
                     msg = _gridCommunication.Receive();
                 }
+
+                if (_senderList.Any())
+                {
+                    CheckConnection();
+                }
+            }
+
+            private void CheckConnection()
+            {
+                if(_senderList.Count <= _checkConnection)
+                {
+                    _checkConnection = 0;
+                }
+                SenderEntity sender = _senderList[_checkConnection];
+
+                Double time = Math.Abs((DateTime.Now - sender.LastUpdate).TotalSeconds);
+                //_program.Echo($"Check Connection: {sender.ID}");
+
+                if (time > _timeoutTime)
+                {
+                    sender.CurrentStatus = SenderEntity.Status.LostConnection;
+                    sender.LCD.Replace(sender.LineNumber[2], "Status: Lost Connection");
+                }
+                else
+                {
+                    sender.CurrentStatus = SenderEntity.Status.Connected;
+                    sender.LCD.Replace(sender.LineNumber[2], "Status: Connected");
+                }
+                sender.LCD.Update();
+                _checkConnection++;
+            }
+
+            private void AddSender(MessageEntity msg)
+            {
+                KeyValuePair<string, LCDUtil> lcd = new KeyValuePair<string, LCDUtil>("-1", null);
+                for (int i = 0; lcd.Value == null && _lcdUtil.Count > i; i++)
+                {
+                    KeyValuePair<string, LCDUtil> selectedLcd = _lcdUtil.ElementAt(i);
+                    _program.Echo($"Sender Count: {selectedLcd.Value.SenderCount} Max: {_maxSenderOnLCD}");
+                    if (selectedLcd.Value.SenderCount < _maxSenderOnLCD)
+                    {
+                        lcd = selectedLcd;
+                        _program.Echo($"Select LCD: {lcd.Key}");
+                        selectedLcd.Value.SenderCount++;
+                    }
+                }
+
+                if (lcd.Value != null)
+                {
+                    _senderList.Add(new SenderEntity(
+                    msg.SenderID,
+                    msg.TimeStamp,
+                    lcd.Value,
+                    SenderEntity.Status.Connected,
+                    new int[] {
+                                lcd.Value.Write("TimeStamp:"),
+                                lcd.Value.Write("SenderID:"),
+                                lcd.Value.Write("Status:"),
+                                lcd.Value.Write("Message:"),
+                                lcd.Value.Write("")
+                    }));
+                    _program.Echo($"Sender LCD Lines: " +
+                        $" {_senderList.Last().LineNumber[0]}" +
+                        $" {_senderList.Last().LineNumber[1]}" +
+                        $" {_senderList.Last().LineNumber[2]}" +
+                        $" {_senderList.Last().LineNumber[3]}");
+                    _program.Echo($"Sender ID: {_senderList.Last().ID}");
+
+                    lcd.Value.Update();
+                }
+            }
+
+            private void UpdateSender(MessageEntity msg, SenderEntity sender)
+            {
+                sender.LastUpdate = msg.TimeStamp;
+                CheckConnection();
+
+                sender.LCD.Replace(sender.LineNumber[0], "TimeStamp: " + msg.TimeStamp.ToString());
+                sender.LCD.Replace(sender.LineNumber[1], "SenderID: " + msg.SenderID.ToString());
+                sender.LCD.Replace(sender.LineNumber[4], msg.Message);
+                sender.LCD.Update();
+
+                /*
+                foreach (KeyValuePair<string, LCDUtil> lcd in _lcdUtil)
+                {
+                    if (lcd.Value != null && lcd.Key.Equals(senderEntity.LCD))
+                    {
+                        lcd.Value.Replace(senderEntity.LineNumber[0], "TimeStamp: " + msg.TimeStamp.ToString());
+                        lcd.Value.Replace(senderEntity.LineNumber[1], "SenderID: " + msg.SenderID.ToString());
+                        lcd.Value.Replace(senderEntity.LineNumber[4], msg.Message);
+                        lcd.Value.Update();
+                    }
+                }*/
             }
         }
     }

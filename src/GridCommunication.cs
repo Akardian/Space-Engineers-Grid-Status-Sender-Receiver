@@ -33,6 +33,8 @@ namespace IngameScript
             private IMyLaserAntenna _laserAntenna;
             private IMyRadioAntenna _radioAntenna;
 
+            List<IMyBroadcastListener> _listeners;
+
             public ClientType Type
             {
                 get { return _type; }
@@ -52,6 +54,8 @@ namespace IngameScript
                 _tag = tag;
                 _checkListener = 0;
 
+                _listeners = new List<IMyBroadcastListener>();
+
                 IGC().RegisterBroadcastListener(_tag);
             }
 
@@ -64,20 +68,16 @@ namespace IngameScript
             {
                 MessageEntity message = null;
 
-                List<IMyBroadcastListener> listeners = new List<IMyBroadcastListener>();
-                IGC().GetBroadcastListeners(listeners);
+                IGC().GetBroadcastListeners(_listeners);
 
-                if(_checkListener >= listeners.Count)
+                if(_checkListener >= _listeners.Count)
                 {
                     _checkListener = 0;
                 }
 
-                if (listeners[_checkListener].HasPendingMessage)
+                if (_listeners[_checkListener].HasPendingMessage)
                 {
-                    MyIGCMessage data = new MyIGCMessage();
-                    data = listeners[_checkListener].AcceptMessage();
-
-                    message = new MessageEntity(_program, data.Data);
+                    message = new MessageEntity(_program, _listeners[_checkListener].AcceptMessage().Data);
                 }
                 _checkListener++;
 

@@ -33,12 +33,15 @@ namespace IngameScript
             public string SenderName { get; set; }
             public string DebugLCD { get; set; }
             public string DebugLCDName { get; set; }
+            public int TimeOutTime { get; set; }
+            public string TimeOutTimeName { get; set; }
 
             private const string _defaultChannel = "channel-0";
             private const bool _defaultSender = false;
             private const string _defaultDebugLCD = "debug-0";
             private const int _defaultMaxLCDEntries = 3;
             private const string _defaultLCD = "LCD-0";
+            private const int _defaultTimeout = 60;
 
             public List<KeyValuePair<string, string>> LcdOutputList { get; private set; }
             public List<MyIniKey> KeyList { get; private set; }
@@ -56,6 +59,7 @@ namespace IngameScript
                 SenderName = "Sender";
                 DebugLCDName = "Debug LCD";
                 MaxSenderOnLCDName = "Max sender on LCD";
+                TimeOutTimeName = "Timeout in Seconds";
 
                 LcdOutputList = new List<KeyValuePair<string, string>>();
                 KeyList = new List<MyIniKey>();
@@ -69,6 +73,7 @@ namespace IngameScript
                 Sender = ini.Get(ConifgSectionName, SenderName).ToBoolean(_defaultSender);
                 DebugLCD = ini.Get(ConifgSectionName, DebugLCDName).ToString(_defaultDebugLCD);
                 MaxSenderOnLCD = ini.Get(ConifgSectionName, MaxSenderOnLCDName).ToInt32(_defaultMaxLCDEntries);
+                TimeOutTime = ini.Get(ConifgSectionName, TimeOutTimeName).ToInt32(_defaultTimeout);
 
                 LcdOutputList.Clear();
                 KeyList.Clear();
@@ -100,6 +105,7 @@ namespace IngameScript
                 ini.Set(ConifgSectionName, SenderName, Sender);
                 ini.Set(ConifgSectionName, DebugLCDName, DebugLCD);
                 ini.Set(ConifgSectionName, MaxSenderOnLCDName, MaxSenderOnLCD);
+                ini.Set(ConifgSectionName, TimeOutTimeName, TimeOutTime);
 
                 foreach (KeyValuePair<string, string> lcdOutput in LcdOutputList)
                 {
