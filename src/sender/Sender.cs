@@ -47,7 +47,6 @@ namespace IngameScript
                 _lineLocation = new int[] {
                     _lcdUtil.Write("TimeStamp"),
                     _lcdUtil.Write("SenderID"),
-                    _lcdUtil.Write("Message:"),
                    _lcdUtil.Write("")
                 };
                 
@@ -59,9 +58,9 @@ namespace IngameScript
                 _gridCommunication.Send(msgNew);
 
                 int index = 0;
-                index = _lcdUtil.Replace(_lineLocation[0], msgNew.TimeStamp.ToString());
-                index = _lcdUtil.Replace(_lineLocation[1], msgNew.SenderID.ToString());
-                index = _lcdUtil.Replace(_lineLocation[3], msgNew.Message);
+                index = _lcdUtil.Replace(_lineLocation[0], "Timestamp: " + msgNew.TimeStamp.ToString());
+                index = _lcdUtil.Replace(_lineLocation[1], "My ID: " + _program.Me.EntityId);
+                index = _lcdUtil.Replace(_lineLocation[2], "Count: " + msgNew.Message);
                 _lcdUtil.Update();
 
                 if(index < 0)

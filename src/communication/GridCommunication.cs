@@ -77,7 +77,8 @@ namespace IngameScript
 
                 if (_listeners[_checkListener].HasPendingMessage)
                 {
-                    message = new MessageEntity(_program, _listeners[_checkListener].AcceptMessage().Data);
+                    message = new MessageEntity(_program);
+                    message.DeSerialize(_listeners[_checkListener].AcceptMessage());
                 }
                 _checkListener++;
 

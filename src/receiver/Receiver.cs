@@ -48,7 +48,7 @@ namespace IngameScript
 
                 foreach (KeyValuePair<string, string> lcd in ini.Data.LcdOutputList)
                 {
-                    _program.Echo($"Out LCD: {lcd.Key}, {lcd.Value}");
+                    _program.Echo($"Output LCD: {lcd.Key}, {lcd.Value}");
                     if (!_lcdUtil.ContainsKey(lcd.Value))
                     {
                         LCDUtil newLCD = new LCDUtil(_program, "");
@@ -75,7 +75,7 @@ namespace IngameScript
 
                     if (senderEntity == null)
                     {
-                        AddSender(msg);                            
+                        AddSender(msg);
                     } else
                     {
                         UpdateSender(msg, senderEntity);
@@ -99,8 +99,6 @@ namespace IngameScript
                 SenderEntity sender = _senderList[_checkConnection];
 
                 Double time = Math.Abs((DateTime.Now - sender.LastUpdate).TotalSeconds);
-                //_program.Echo($"Check Connection: {sender.ID}");
-
                 if (time > _timeoutTime)
                 {
                     sender.CurrentStatus = SenderEntity.Status.LostConnection;
@@ -138,20 +136,20 @@ namespace IngameScript
                     lcd.Value,
                     SenderEntity.Status.Connected,
                     new int[] {
-                                lcd.Value.Write("TimeStamp:"),
-                                lcd.Value.Write("SenderID:"),
-                                lcd.Value.Write("Status:"),
+                                lcd.Value.Write("TimeStamp: " + msg.TimeStamp.ToString()),
+                                lcd.Value.Write("SenderID:" + msg.SenderID.ToString()),
+                                lcd.Value.Write("Status: Connecting ..."),
                                 lcd.Value.Write("Message:"),
-                                lcd.Value.Write("")
+                                lcd.Value.Write(msg.Message)
                     }));
+                    lcd.Value.Update();
+
                     _program.Echo($"Sender LCD Lines: " +
                         $" {_senderList.Last().LineNumber[0]}" +
                         $" {_senderList.Last().LineNumber[1]}" +
                         $" {_senderList.Last().LineNumber[2]}" +
                         $" {_senderList.Last().LineNumber[3]}");
                     _program.Echo($"Sender ID: {_senderList.Last().ID}");
-
-                    lcd.Value.Update();
                 }
             }
 
@@ -164,18 +162,6 @@ namespace IngameScript
                 sender.LCD.Replace(sender.LineNumber[1], "SenderID: " + msg.SenderID.ToString());
                 sender.LCD.Replace(sender.LineNumber[4], msg.Message);
                 sender.LCD.Update();
-
-                /*
-                foreach (KeyValuePair<string, LCDUtil> lcd in _lcdUtil)
-                {
-                    if (lcd.Value != null && lcd.Key.Equals(senderEntity.LCD))
-                    {
-                        lcd.Value.Replace(senderEntity.LineNumber[0], "TimeStamp: " + msg.TimeStamp.ToString());
-                        lcd.Value.Replace(senderEntity.LineNumber[1], "SenderID: " + msg.SenderID.ToString());
-                        lcd.Value.Replace(senderEntity.LineNumber[4], msg.Message);
-                        lcd.Value.Update();
-                    }
-                }*/
             }
         }
     }

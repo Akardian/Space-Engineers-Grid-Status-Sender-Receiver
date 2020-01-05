@@ -21,7 +21,7 @@ namespace IngameScript
 {
     partial class Program
     {
-        public class MessageEntity 
+        public class MessageEntity
         {
             public DateTime TimeStamp { get; private set; }
             public long SenderID { get; private set; }
@@ -29,16 +29,8 @@ namespace IngameScript
 
             private readonly Program _program;
 
-            public MessageEntity(Program program, object serializedMsg)
-            {
-                _program = program;
-                DeSerialize(serializedMsg.ToString());
-            }
-
-            public MessageEntity(Program program, string message) : this (program, program.Me.EntityId, message) { } 
-
-            public MessageEntity(Program program, long senderID, string message) : this(program ,DateTime.Now, senderID, message) { }
-
+            public MessageEntity(Program program) : this(program, new DateTime(), 0, "") { }
+            public MessageEntity(Program program, string message) : this(program, DateTime.Now, 0, message) { }
             public MessageEntity(Program program, DateTime timeStamp, long senderID, string message)
             {
                 TimeStamp = timeStamp;
@@ -47,21 +39,22 @@ namespace IngameScript
                 _program = program;
             }
 
-            public string Serialize()
+            public MyTuple<string, string> Serialize()
             {
-                return TimeStamp + ";" + SenderID + ";" + Message;
+                return new MyTuple<string, string>(TimeStamp.ToString(), Message);
             }
 
-            private void DeSerialize(String msg)
+            public void DeSerialize(MyIGCMessage msg)
             {
                 try
                 {
-                    //_program.Echo($"DeSerialize: {msg}");
-                    String[] strlist = msg.Split(';');
-                    TimeStamp = Convert.ToDateTime(strlist[0]);
-                    SenderID = Convert.ToInt64(strlist[1]);
-                    Message = strlist[2];
-                } catch (Exception e)
+                    MyTuple<string, string> msgTuple = (MyTuple<string, string>)msg.Data;
+
+                    TimeStamp = Convert.ToDateTime(msgTuple.Item1);
+                    SenderID = msg.Source;
+                    Message = msgTuple.Item2;
+                }
+                catch (Exception e)
                 {
                     _program.Echo($"Exception: {e}\n---");
                 }
