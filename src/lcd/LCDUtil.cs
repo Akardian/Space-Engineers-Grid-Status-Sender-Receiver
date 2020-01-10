@@ -56,7 +56,7 @@ namespace IngameScript
             {
                 foreach(KeyValuePair<string, string> lcdName in lcdNameList)
                 {
-                    _program.Echo($"LCD Name List:{lcdName.Value}");
+                    _program.Echo($"LCDUtil: Add output LCD:{lcdName.Value}");
                     Add(lcdName.Value);
                 }
             }
@@ -74,7 +74,7 @@ namespace IngameScript
                     }
                     else
                     {
-                        _program.Echo($"LCD Not found: {lcdName}");
+                        _program.Echo($"LCDUtil: LCD Not found: {lcdName}");
                     }
                 }
             }

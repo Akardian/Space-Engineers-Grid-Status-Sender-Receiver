@@ -25,34 +25,38 @@ namespace IngameScript
         {
             public DateTime TimeStamp { get; private set; }
             public long SenderID { get; private set; }
+            public string SenderName { get; private set; }
             public string Message { get; private set; }
 
             private readonly Program _program;
 
-            public MessageEntity(Program program) : this(program, new DateTime(), 0, "") { }
-            public MessageEntity(Program program, string message) : this(program, DateTime.Now, 0, message) { }
-            public MessageEntity(Program program, DateTime timeStamp, long senderID, string message)
+            public MessageEntity(Program program) : this(program, new DateTime(), 0,"", "") { }
+            public MessageEntity(Program program, string message) : this(program, DateTime.Now, 0, "", message) { }
+            public MessageEntity(Program program, string senderName, string message) : this(program, DateTime.Now, 0, senderName, message) { }
+            public MessageEntity(Program program, DateTime timeStamp, long senderID, string senderName, string message)
             {
                 TimeStamp = timeStamp;
                 SenderID = senderID;
+                SenderName = senderName;
                 Message = message;
                 _program = program;
             }
 
-            public MyTuple<string, string> Serialize()
+            public MyTuple<string, string, string> Serialize()
             {
-                return new MyTuple<string, string>(TimeStamp.ToString(), Message);
+                return new MyTuple<string, string, string>(TimeStamp.ToString(), SenderName, Message);
             }
 
             public void DeSerialize(MyIGCMessage msg)
             {
                 try
                 {
-                    MyTuple<string, string> msgTuple = (MyTuple<string, string>)msg.Data;
+                    MyTuple<string, string, string> msgTuple = (MyTuple<string, string, string>)msg.Data;
 
                     TimeStamp = Convert.ToDateTime(msgTuple.Item1);
                     SenderID = msg.Source;
-                    Message = msgTuple.Item2;
+                    SenderName = msgTuple.Item2;
+                    Message = msgTuple.Item3;
                 }
                 catch (Exception e)
                 {

@@ -65,11 +65,12 @@ namespace IngameScript
 
                 Echo = _debug.Echo;
 
-                if (_ini.Data.Sender)
+                Echo($"Init: Set client type to {_ini.Data.ClientType}");
+                if (_ini.Data.ClientType == CustomDataEntity.ClientTypes.Sender)
                 {
                     _sender = new Sender(this, _ini);
                 }
-                else
+                else if (_ini.Data.ClientType == CustomDataEntity.ClientTypes.Reciever)
                 {
                     _reciever = new Receiver(this, _ini);
                 }
@@ -85,13 +86,17 @@ namespace IngameScript
         {
             if (running)
             {
-                if (_ini.Data.Sender)
+                if (_ini.Data.ClientType == CustomDataEntity.ClientTypes.Sender)
                 {
                     _sender.Run();
                 }
-                else
+                else if (_ini.Data.ClientType == CustomDataEntity.ClientTypes.Reciever)
                 {
                     _reciever.Run();
+                } else
+                {
+                    Echo("No Client Type set.");
+                    Runtime.UpdateFrequency = UpdateFrequency.None;
                 }
             }
         }

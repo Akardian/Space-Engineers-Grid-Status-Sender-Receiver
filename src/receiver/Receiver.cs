@@ -137,7 +137,7 @@ namespace IngameScript
                     SenderEntity.Status.Connected,
                     new int[] {
                                 lcd.Value.Write("TimeStamp: " + msg.TimeStamp.ToString()),
-                                lcd.Value.Write("SenderID:" + msg.SenderID.ToString()),
+                                lcd.Value.Write("Sender Name:" + msg.SenderName),
                                 lcd.Value.Write("Status: Connecting ..."),
                                 lcd.Value.Write("Message:"),
                                 lcd.Value.Write(msg.Message)
@@ -159,7 +159,7 @@ namespace IngameScript
                 CheckConnection();
 
                 sender.LCD.Replace(sender.LineNumber[0], "TimeStamp: " + msg.TimeStamp.ToString());
-                sender.LCD.Replace(sender.LineNumber[1], "SenderID: " + msg.SenderID.ToString());
+                sender.LCD.Replace(sender.LineNumber[1], "Sender Name: " + msg.SenderName);
                 sender.LCD.Replace(sender.LineNumber[4], msg.Message);
                 sender.LCD.Update();
             }

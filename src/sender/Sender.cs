@@ -27,7 +27,8 @@ namespace IngameScript
             private LCDUtil _lcdUtil;
 
             private int _count;
-            private int[] _lineLocation;
+            private readonly string _senderName;
+            private readonly int[] _lineLocation;
 
             private readonly Program _program;
             public Sender(Program program, CustomDataIni ini)
@@ -35,6 +36,7 @@ namespace IngameScript
                 _program = program;
 
                 _count = 0;
+                _senderName = ini.Data.SenderName;
 
                 _lcdUtil = new LCDUtil(_program);
                 _lcdUtil.Add(ini.Data.LcdOutputList);
@@ -46,20 +48,20 @@ namespace IngameScript
 
                 _lineLocation = new int[] {
                     _lcdUtil.Write("TimeStamp"),
-                    _lcdUtil.Write("SenderID"),
-                   _lcdUtil.Write("")
+                    _lcdUtil.Write("My Name"),
+                    _lcdUtil.Write("")
                 };
                 
             }
             public void Run()
             {
-                MessageEntity msgNew = new MessageEntity(_program, _count.ToString());
+                MessageEntity msgNew = new MessageEntity(_program, _senderName, _count.ToString());
 
                 _gridCommunication.Send(msgNew);
 
                 int index = 0;
                 index = _lcdUtil.Replace(_lineLocation[0], "Timestamp: " + msgNew.TimeStamp.ToString());
-                index = _lcdUtil.Replace(_lineLocation[1], "My ID: " + _program.Me.EntityId);
+                index = _lcdUtil.Replace(_lineLocation[1], "My Name: " + _senderName);
                 index = _lcdUtil.Replace(_lineLocation[2], "Count: " + msgNew.Message);
                 _lcdUtil.Update();
 
