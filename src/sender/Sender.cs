@@ -24,7 +24,11 @@ namespace IngameScript
         public class Sender
         {
             private GridCommunication _gridCommunication;
-            private LCDUtil _lcdUtil;
+
+            private readonly LCDUtil _lcdUtil;
+
+            private readonly BatteryStatus _batteryStatus;
+            private readonly HydrogenTankStatus _hydrogenTankStatus;
 
             private int _count;
             private readonly string _senderName;
@@ -38,20 +42,26 @@ namespace IngameScript
                 _count = 0;
                 _senderName = ini.Data.SenderName;
 
+                _gridCommunication = new GridCommunication(_program, GridCommunication.ClientType.Sender, ini.Data.Channel);
+
                 _lcdUtil = new LCDUtil(_program);
                 _lcdUtil.Add(ini.Data.LcdOutputList);
                 _lcdUtil.TextContentOn();
                 _lcdUtil.SetFont(LCDUtil.FontColor.Green, 1f);
                 _lcdUtil.Header = $"-- Sender --\n";
 
-                _gridCommunication = new GridCommunication(_program, GridCommunication.ClientType.Sender, ini.Data.Channel);
-
                 _lineLocation = new int[] {
                     _lcdUtil.Write("TimeStamp"),
                     _lcdUtil.Write("My Name"),
+                    _lcdUtil.Write("Battery Power"),
+                    _lcdUtil.Write("Max Battery Power"),
+                    _lcdUtil.Write("Current Capacity"),
+                    _lcdUtil.Write("Max Capacity"),
                     _lcdUtil.Write("")
                 };
-                
+
+                _batteryStatus = new BatteryStatus(_program);
+                _hydrogenTankStatus = new HydrogenTankStatus(_program, ini.Data);
             }
             public void Run()
             {
@@ -62,7 +72,11 @@ namespace IngameScript
                 int index = 0;
                 index = _lcdUtil.Replace(_lineLocation[0], "Timestamp: " + msgNew.TimeStamp.ToString());
                 index = _lcdUtil.Replace(_lineLocation[1], "My Name: " + _senderName);
-                index = _lcdUtil.Replace(_lineLocation[2], "Count: " + msgNew.Message);
+                index = _lcdUtil.Replace(_lineLocation[3], "Battery Status: " + _batteryStatus.CurrentStoredPower() + " MWh");
+                index = _lcdUtil.Replace(_lineLocation[2], "Max Battery Power: " + _batteryStatus.MaxStoredPower + " MWh");
+                index = _lcdUtil.Replace(_lineLocation[5], "Current Capacity: " + _hydrogenTankStatus.CheckCapacity() + " L");
+                index = _lcdUtil.Replace(_lineLocation[4], "Max Capacity: " + _hydrogenTankStatus.MaxCapacity + " L");
+                index = _lcdUtil.Replace(_lineLocation[6], "Count: " + msgNew.Message);
                 _lcdUtil.Update();
 
                 if(index < 0)
