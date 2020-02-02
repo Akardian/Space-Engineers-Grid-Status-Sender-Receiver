@@ -140,7 +140,7 @@ namespace IngameScript
                                 lcd.Value.Write("Sender Name:" + msg.SenderName),
                                 lcd.Value.Write("Status: Connecting ..."),
                                 lcd.Value.Write("Message:"),
-                                lcd.Value.Write(msg.Message)
+                                lcd.Value.Write($"B: {msg.CurrentBatteryPower} H: {msg.CurrentHydrogen}")
                     }));
                     lcd.Value.Update();
 
@@ -160,7 +160,7 @@ namespace IngameScript
 
                 sender.LCD.Replace(sender.LineNumber[0], "TimeStamp: " + msg.TimeStamp.ToString());
                 sender.LCD.Replace(sender.LineNumber[1], "Sender Name: " + msg.SenderName);
-                sender.LCD.Replace(sender.LineNumber[4], msg.Message);
+                sender.LCD.Replace(sender.LineNumber[4], $"B: {msg.CurrentBatteryPower} H: {msg.CurrentHydrogen}");
                 sender.LCD.Update();
             }
         }

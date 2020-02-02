@@ -57,7 +57,6 @@ namespace IngameScript
                     _lcdUtil.Write("Max Battery Power"),
                     _lcdUtil.Write("Current Capacity"),
                     _lcdUtil.Write("Max Capacity"),
-                    _lcdUtil.Write("")
                 };
 
                 _batteryStatus = new BatteryStatus(_program);
@@ -65,7 +64,13 @@ namespace IngameScript
             }
             public void Run()
             {
-                MessageEntity msgNew = new MessageEntity(_program, _senderName, _count.ToString());
+                MessageEntity msgNew = new MessageEntity(
+                    _program,
+                    _senderName,
+                    _batteryStatus.CurrentStoredPower(),
+                    _batteryStatus.MaxStoredPower,
+                    _hydrogenTankStatus.CheckCapacity(),
+                    _hydrogenTankStatus.MaxCapacity);
 
                 _gridCommunication.Send(msgNew);
 
@@ -76,7 +81,6 @@ namespace IngameScript
                 index = _lcdUtil.Replace(_lineLocation[2], "Max Battery Power: " + _batteryStatus.MaxStoredPower + " MWh");
                 index = _lcdUtil.Replace(_lineLocation[5], "Current Capacity: " + _hydrogenTankStatus.CheckCapacity() + " L");
                 index = _lcdUtil.Replace(_lineLocation[4], "Max Capacity: " + _hydrogenTankStatus.MaxCapacity + " L");
-                index = _lcdUtil.Replace(_lineLocation[6], "Count: " + msgNew.Message);
                 _lcdUtil.Update();
 
                 if(index < 0)

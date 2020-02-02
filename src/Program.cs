@@ -29,15 +29,14 @@ namespace IngameScript
         private Sender _sender;
         private Receiver _reciever;
 
-        private bool running;
-
         public Program()
         {
             try
             {
-                Init();
-
-                Runtime.UpdateFrequency = UpdateFrequency.Update100;
+                if(Init())
+                {
+                    Runtime.UpdateFrequency = UpdateFrequency.Update100;
+                }                
             }
             catch (Exception e)
             {
@@ -46,9 +45,8 @@ namespace IngameScript
             }
         }
 
-        public void Init()
+        public bool Init()
         {
-            running = false;
             _ini = new CustomDataIni(this);
             if (_ini.LoadCustomData())
             {
@@ -75,29 +73,27 @@ namespace IngameScript
                     _reciever = new Receiver(this, _ini);
                 }
 
-                running = true;
+                return true;
             } else
             {
                 Echo($"\nUse the Argument \"default\" to reset\n the custom data");
+                return false;
             }
         }
 
         void RunContinuousLogic()
         {
-            if (running)
+            if (_ini.Data.ClientType == CustomDataEntity.ClientTypes.Sender)
             {
-                if (_ini.Data.ClientType == CustomDataEntity.ClientTypes.Sender)
-                {
-                    _sender.Run();
-                }
-                else if (_ini.Data.ClientType == CustomDataEntity.ClientTypes.Reciever)
-                {
-                    _reciever.Run();
-                } else
-                {
-                    Echo("No Client Type set.");
-                    Runtime.UpdateFrequency = UpdateFrequency.None;
-                }
+                _sender.Run();
+            }
+            else if (_ini.Data.ClientType == CustomDataEntity.ClientTypes.Reciever)
+            {
+                _reciever.Run();
+            } else
+            {
+                Echo("No Client Type set.");
+                Runtime.UpdateFrequency = UpdateFrequency.None;
             }
         }
 

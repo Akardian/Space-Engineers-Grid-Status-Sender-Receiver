@@ -16,6 +16,7 @@ using VRage.Game.ObjectBuilders.Definitions;
 using VRage.Game;
 using VRage;
 using VRageMath;
+using System.Collections.Immutable;
 
 namespace IngameScript
 {
@@ -26,37 +27,58 @@ namespace IngameScript
             public DateTime TimeStamp { get; private set; }
             public long SenderID { get; private set; }
             public string SenderName { get; private set; }
-            public string Message { get; private set; }
+            public float CurrentBatteryPower { get; private set; }
+            public float MaxBatteryPower { get; private set; }
+            public double CurrentHydrogen { get; private set; }
+            public double MaxHydrogen { get; private set; }
 
             private readonly Program _program;
 
-            public MessageEntity(Program program) : this(program, new DateTime(), 0,"", "") { }
-            public MessageEntity(Program program, string message) : this(program, DateTime.Now, 0, "", message) { }
-            public MessageEntity(Program program, string senderName, string message) : this(program, DateTime.Now, 0, senderName, message) { }
-            public MessageEntity(Program program, DateTime timeStamp, long senderID, string senderName, string message)
+            public MessageEntity(Program program) : this(program, "", -1, -1, -1, -1) { }
+            public MessageEntity(Program program, string senderName,
+                                 float currentBatteryPower, float maxBatteryPower,
+                                 double currentHydrogen, double maxHydrogen)
             {
-                TimeStamp = timeStamp;
-                SenderID = senderID;
-                SenderName = senderName;
-                Message = message;
                 _program = program;
+
+                TimeStamp = DateTime.Now;
+                SenderID = -1;
+                SenderName = senderName;
+
+                CurrentBatteryPower = currentBatteryPower;
+                MaxBatteryPower = maxBatteryPower;
+
+                CurrentHydrogen = currentHydrogen;
+                MaxHydrogen = maxHydrogen;
             }
 
-            public MyTuple<string, string, string> Serialize()
+            public MyTuple<string, string, ImmutableArray<float>, ImmutableArray<double>> Serialize()
             {
-                return new MyTuple<string, string, string>(TimeStamp.ToString(), SenderName, Message);
+                return new MyTuple<string, string, ImmutableArray<float>, ImmutableArray<double>> (
+                    TimeStamp.ToString(),
+                    SenderName,
+                    ImmutableArray.Create(CurrentBatteryPower, MaxBatteryPower),
+                    ImmutableArray.Create(CurrentHydrogen, MaxHydrogen)
+                   );
             }
 
             public void DeSerialize(MyIGCMessage msg)
             {
                 try
                 {
-                    MyTuple<string, string, string> msgTuple = (MyTuple<string, string, string>)msg.Data;
+                    MyTuple<string, string, ImmutableArray<float>, ImmutableArray<double>> msgTuple = 
+                    (MyTuple<string, string, ImmutableArray<float>, ImmutableArray<double>>)msg.Data;
+
+                    SenderID = msg.Source;
 
                     TimeStamp = Convert.ToDateTime(msgTuple.Item1);
-                    SenderID = msg.Source;
                     SenderName = msgTuple.Item2;
-                    Message = msgTuple.Item3;
+
+                    CurrentBatteryPower = msgTuple.Item3[0];
+                    MaxBatteryPower = msgTuple.Item3[1];
+
+                    CurrentHydrogen = msgTuple.Item4[0];
+                    MaxHydrogen = msgTuple.Item4[1];
                 }
                 catch (Exception e)
                 {

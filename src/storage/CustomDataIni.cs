@@ -75,7 +75,7 @@ namespace IngameScript
                 bool succes = _ini.TryParse(_me.CustomData, out result);
                 if (succes)
                 {
-                    Data.LoadData(_ini);
+                    succes = Data.LoadData(_ini);
                 } else
                 {
                     _program.Echo($"ERROR: Parse failed, Duplicated LCD Key?");

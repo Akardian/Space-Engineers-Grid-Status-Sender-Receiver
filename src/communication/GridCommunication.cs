@@ -25,24 +25,16 @@ namespace IngameScript
         {
             private readonly Program _program;
 
-            private readonly ClientType _type;
-            private string _tag;
-            private int _checkListener;
+            public ClientType Type { get; private set; }
+            public string Tag { get; private set; }
 
+            private int _checkListener;
             private AntennaType _antennaType;
             private IMyLaserAntenna _laserAntenna;
             private IMyRadioAntenna _radioAntenna;
 
             List<IMyBroadcastListener> _listeners;
 
-            public ClientType Type
-            {
-                get { return _type; }
-            }
-            public string Tag
-            {
-                get { return _tag; }
-            }
 
             public enum ClientType : byte { Sender, Reciever }
             public enum AntennaType : byte { Laser, Radio }
@@ -50,18 +42,18 @@ namespace IngameScript
             public GridCommunication(Program program, ClientType type, string tag)
             {
                 _program = program;
-                _type = type;
-                _tag = tag;
+                Type = type;
+                Tag = tag;
                 _checkListener = 0;
 
                 _listeners = new List<IMyBroadcastListener>();
 
-                IGC().RegisterBroadcastListener(_tag);
+                IGC().RegisterBroadcastListener(Tag);
             }
 
             public void Send(MessageEntity msg)
             {
-                IGC().SendBroadcastMessage(_tag, msg.Serialize(), TransmissionDistance.TransmissionDistanceMax);
+                IGC().SendBroadcastMessage(Tag, msg.Serialize(), TransmissionDistance.TransmissionDistanceMax);
             }
 
             public MessageEntity Receive()
@@ -69,7 +61,6 @@ namespace IngameScript
                 MessageEntity message = null;
 
                 IGC().GetBroadcastListeners(_listeners);
-
                 if(_checkListener >= _listeners.Count)
                 {
                     _checkListener = 0;

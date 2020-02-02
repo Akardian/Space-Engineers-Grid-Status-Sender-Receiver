@@ -85,41 +85,48 @@ namespace IngameScript
                 KeyList = new List<MyIniKey>();
             }
 
-            public void LoadData(MyIni ini)
+            public bool LoadData(MyIni ini)
             {
-                Channel = ini.Get(_conifgSectionName, _channelName).ToString(_defaultChannel);
-                ClientType = (ClientTypes)System.Enum.Parse(typeof(ClientTypes), ini.Get(_conifgSectionName, _clientTypeName).ToString(_defaultClientType.ToString()));
-                DebugLCD = ini.Get(_conifgSectionName, _debugLCDName).ToString(_defaultDebugLCD);
-
-                SenderName = ini.Get(_senderConifgSectionName, _senderNameName).ToString(_defaultSenderName);
-                SmallTankCapacity = ini.Get(_senderConifgSectionName, _smallTankCapacityName).ToSingle(_defaultSmallTankCapacity);
-                LargeTankCapacity = ini.Get(_senderConifgSectionName, _largeTankCapacityName).ToSingle(_defaultLargeTankCapacity);
-
-                MaxSenderOnLCD = ini.Get(_recieverConifgSectionName, _maxSenderOnLCDName).ToInt32(_defaultMaxLCDEntries);
-                TimeOutTime = ini.Get(_recieverConifgSectionName, _timeOutTimeName).ToInt32(_defaultTimeout);
-
-                LcdOutputList.Clear();
-                KeyList.Clear();
-                ini.GetKeys(_lcdSectiongName, KeyList);
-
-                _program.Echo($"Key list has entry: {KeyList.Any()}");
-                if (KeyList.Any())
+                try
                 {
-                    foreach (MyIniKey key in KeyList)
+                    Channel = ini.Get(_conifgSectionName, _channelName).ToString(_defaultChannel);
+                    ClientType = (ClientTypes)System.Enum.Parse(typeof(ClientTypes), ini.Get(_conifgSectionName, _clientTypeName).ToString(_defaultClientType.ToString()));
+                    DebugLCD = ini.Get(_conifgSectionName, _debugLCDName).ToString(_defaultDebugLCD);
+
+                    SenderName = ini.Get(_senderConifgSectionName, _senderNameName).ToString(_defaultSenderName);
+                    SmallTankCapacity = ini.Get(_senderConifgSectionName, _smallTankCapacityName).ToSingle(_defaultSmallTankCapacity);
+                    LargeTankCapacity = ini.Get(_senderConifgSectionName, _largeTankCapacityName).ToSingle(_defaultLargeTankCapacity);
+
+                    MaxSenderOnLCD = ini.Get(_recieverConifgSectionName, _maxSenderOnLCDName).ToInt32(_defaultMaxLCDEntries);
+                    TimeOutTime = ini.Get(_recieverConifgSectionName, _timeOutTimeName).ToInt32(_defaultTimeout);
+
+                    LcdOutputList.Clear();
+                    KeyList.Clear();
+                    ini.GetKeys(_lcdSectiongName, KeyList);
+
+                    _program.Echo($"Key list has entry: {KeyList.Any()}");
+                    if (KeyList.Any())
                     {
-                        _program.Echo($"Section: {key.Section} Name: {key.Name}");
-                        LcdOutputList.Add(new KeyValuePair<string, string>(
-                            key.Name,
-                            ini.Get(_lcdSectiongName, key.Name).ToString("DefaultValue")));
+                        foreach (MyIniKey key in KeyList)
+                        {
+                            _program.Echo($"Section: {key.Section} Name: {key.Name}");
+                            LcdOutputList.Add(new KeyValuePair<string, string>(
+                                key.Name,
+                                ini.Get(_lcdSectiongName, key.Name).ToString("DefaultValue")));
+                        }
                     }
-                } else
+                    else
+                    {
+                        _program.Echo("No Data to Load");
+                        LcdOutputList.Add(new KeyValuePair<string, string>(
+                            "LCD-0", "Default-LCD"));
+                    }
+                    return true;
+                } catch (Exception e)
                 {
-                    _program.Echo("No Data to Load");
-                    LcdOutputList.Add(new KeyValuePair<string, string>(
-                        "LCD-0","Default-LCD"));
+                    _program.Echo($"Could not load CustomData:  {e}");
+                    return false;
                 }
-
-                
             }
 
             public void SaveData(MyIni ini)
