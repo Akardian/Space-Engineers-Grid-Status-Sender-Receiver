@@ -27,7 +27,7 @@ namespace IngameScript
             public DateTime LastUpdate { get; set; }
             public Status CurrentStatus { get; set; }
             public LCDUtil LCD { get; set; }
-            public int[] LineNumber { get; set; }
+            public int[] LineNumber { get; private set; }
 
             public enum Status : byte { Connected, LostConnection }
 
@@ -36,8 +36,8 @@ namespace IngameScript
                 ID = id;
                 LastUpdate = lastUpdate;
                 LCD = lcd;
-                LineNumber = lineNumber;
                 CurrentStatus = status;
+                LineNumber = lineNumber;
             }
         }
     }

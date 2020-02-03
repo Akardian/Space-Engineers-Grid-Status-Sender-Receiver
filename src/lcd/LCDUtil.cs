@@ -27,9 +27,9 @@ namespace IngameScript
             public string ID { get; private set; }
             public int SenderCount { get; set; }
 
-            private List<IMyTextPanel> _lcdList;
-            private List<string> _lcdLines;
-            private List<IMyTerminalBlock> _searchLCD;
+            private readonly List<IMyTextPanel> _lcdList;
+            private readonly List<string> _lcdLines;
+            private readonly List<IMyTerminalBlock> _searchLCD;
 
             private readonly Program _program;
             public enum FontColor : byte { Green, Red, Blue }
@@ -113,16 +113,16 @@ namespace IngameScript
                 }
             }
 
-            public int Write(string line)
+            public int[] ReserveLines(int count)
             {
-                _lcdLines.Add(line);
+                int[] lineIndex = new int[count];
+               for(int i = 0; i < count; i++)
+               {
+                    _lcdLines.Add("");
+                    lineIndex[i] = _lcdLines.Count() - 1;
+               }
 
-                return _lcdLines.Count() -1;
-            }
-
-            public void Write(string line, int index)
-            {
-                _lcdLines.Insert(index, line);
+                return lineIndex;
             }
 
             public void Remove(string line)
@@ -130,26 +130,25 @@ namespace IngameScript
                 _lcdLines.Remove(line);
             }
 
-            public void Remove(int index)
+            public void RemoveAt(int index)
             {
                 _lcdLines.RemoveAt(index);
             }
 
-            public int Replace(string oldLine, string newLine)
+            private int Write(string newLine)
+            {
+                return Write(-1, newLine);
+            }
+
+            public int Write(string oldLine, string newLine)
             {
                 int index = _lcdLines.IndexOf(oldLine);
-                if (index != -1)
-                {
-                    _lcdLines[index] = newLine;
-                } else
-                {
-                    index = Write(newLine);
-                }
+                index = Write(index, newLine);
 
                 return index;
             }
 
-            public int Replace(int index, string newLine)
+            public int Write(int index, string newLine)
             {
                 if(_lcdLines.Count >= 0 && _lcdLines.Count > index)
                 {
@@ -157,7 +156,8 @@ namespace IngameScript
                 }
                 else
                 {
-                    index = Write(newLine);
+                    _lcdLines.Add(newLine);
+                    index = _lcdLines.Count() - 1;
                 }
                 return index;
             }

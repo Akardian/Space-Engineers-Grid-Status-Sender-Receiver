@@ -49,15 +49,7 @@ namespace IngameScript
                 _lcdUtil.TextContentOn();
                 _lcdUtil.SetFont(LCDUtil.FontColor.Green, 1f);
                 _lcdUtil.Header = $"-- Sender --\n";
-
-                _lineLocation = new int[] {
-                    _lcdUtil.Write("TimeStamp"),
-                    _lcdUtil.Write("My Name"),
-                    _lcdUtil.Write("Battery Power"),
-                    _lcdUtil.Write("Max Battery Power"),
-                    _lcdUtil.Write("Current Capacity"),
-                    _lcdUtil.Write("Max Capacity"),
-                };
+                _lineLocation = _lcdUtil.ReserveLines(6);
 
                 _batteryStatus = new BatteryStatus(_program);
                 _hydrogenTankStatus = new HydrogenTankStatus(_program, ini.Data);
@@ -74,19 +66,13 @@ namespace IngameScript
 
                 _gridCommunication.Send(msgNew);
 
-                int index = 0;
-                index = _lcdUtil.Replace(_lineLocation[0], "Timestamp: " + msgNew.TimeStamp.ToString());
-                index = _lcdUtil.Replace(_lineLocation[1], "My Name: " + _senderName);
-                index = _lcdUtil.Replace(_lineLocation[3], "Battery Status: " + _batteryStatus.CurrentStoredPower() + " MWh");
-                index = _lcdUtil.Replace(_lineLocation[2], "Max Battery Power: " + _batteryStatus.MaxStoredPower + " MWh");
-                index = _lcdUtil.Replace(_lineLocation[5], "Current Capacity: " + _hydrogenTankStatus.CheckCapacity() + " L");
-                index = _lcdUtil.Replace(_lineLocation[4], "Max Capacity: " + _hydrogenTankStatus.MaxCapacity + " L");
+                _lcdUtil.Write(_lineLocation[0], "Timestamp: " + msgNew.TimeStamp.ToString());
+                _lcdUtil.Write(_lineLocation[1], "My Name: " + _senderName);
+                _lcdUtil.Write(_lineLocation[3], "Battery Status: " + _batteryStatus.CurrentStoredPower() + " MWh");
+                _lcdUtil.Write(_lineLocation[2], "Max Battery Power: " + _batteryStatus.MaxStoredPower + " MWh");
+                _lcdUtil.Write(_lineLocation[5], "Current Capacity: " + _hydrogenTankStatus.CheckCapacity() + " L");
+                _lcdUtil.Write(_lineLocation[4], "Max Capacity: " + _hydrogenTankStatus.MaxCapacity + " L");
                 _lcdUtil.Update();
-
-                if(index < 0)
-                {
-                    throw new Exception($"ERROR: Could not replace LCD line. CODE:{index}");
-                }
 
                 _count++;
             }

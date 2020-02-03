@@ -90,7 +90,7 @@ namespace IngameScript
                 }
             }
 
-            private void CheckConnection()
+            private string CheckConnection()
             {
                 if(_senderList.Count <= _checkConnection)
                 {
@@ -98,19 +98,21 @@ namespace IngameScript
                 }
                 SenderEntity sender = _senderList[_checkConnection];
 
+                string connectionStatus;
                 Double time = Math.Abs((DateTime.Now - sender.LastUpdate).TotalSeconds);
                 if (time > _timeoutTime)
                 {
                     sender.CurrentStatus = SenderEntity.Status.LostConnection;
-                    sender.LCD.Replace(sender.LineNumber[2], "Status: Lost Connection");
+                    connectionStatus = "Lost Connection";
                 }
                 else
                 {
                     sender.CurrentStatus = SenderEntity.Status.Connected;
-                    sender.LCD.Replace(sender.LineNumber[2], "Status: Connected");
+                    connectionStatus = "Connected";
                 }
-                sender.LCD.Update();
                 _checkConnection++;
+
+                return connectionStatus;
             }
 
             private void AddSender(MessageEntity msg)
@@ -135,32 +137,20 @@ namespace IngameScript
                     msg.TimeStamp,
                     lcd.Value,
                     SenderEntity.Status.Connected,
-                    new int[] {
-                                lcd.Value.Write("TimeStamp: " + msg.TimeStamp.ToString()),
-                                lcd.Value.Write("Sender Name:" + msg.SenderName),
-                                lcd.Value.Write("Status: Connecting ..."),
-                                lcd.Value.Write("Message:"),
-                                lcd.Value.Write($"B: {msg.CurrentBatteryPower} H: {msg.CurrentHydrogen}")
-                    }));
+                    lcd.Value.ReserveLines(5)));
                     lcd.Value.Update();
-
-                    _program.Echo($"Sender LCD Lines: " +
-                        $" {_senderList.Last().LineNumber[0]}" +
-                        $" {_senderList.Last().LineNumber[1]}" +
-                        $" {_senderList.Last().LineNumber[2]}" +
-                        $" {_senderList.Last().LineNumber[3]}");
-                    _program.Echo($"Sender ID: {_senderList.Last().ID}");
                 }
             }
 
             private void UpdateSender(MessageEntity msg, SenderEntity sender)
             {
+                string connectionStatus = CheckConnection();
                 sender.LastUpdate = msg.TimeStamp;
-                CheckConnection();
 
-                sender.LCD.Replace(sender.LineNumber[0], "TimeStamp: " + msg.TimeStamp.ToString());
-                sender.LCD.Replace(sender.LineNumber[1], "Sender Name: " + msg.SenderName);
-                sender.LCD.Replace(sender.LineNumber[4], $"B: {msg.CurrentBatteryPower} H: {msg.CurrentHydrogen}");
+                sender.LCD.Write(sender.LineNumber[1], "TimeStamp: " + msg.TimeStamp.ToString());
+                sender.LCD.Write(sender.LineNumber[2], "Sender Name: " + msg.SenderName);
+                sender.LCD.Write(sender.LineNumber[3], $"Status: {connectionStatus}");
+                sender.LCD.Write(sender.LineNumber[4], $"B: {msg.CurrentBatteryPower} H: {msg.CurrentHydrogen}");
                 sender.LCD.Update();
             }
         }
