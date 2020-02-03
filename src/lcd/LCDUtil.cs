@@ -135,11 +135,6 @@ namespace IngameScript
                 _lcdLines.RemoveAt(index);
             }
 
-            private int Write(string newLine)
-            {
-                return Write(-1, newLine);
-            }
-
             public int Write(string oldLine, string newLine)
             {
                 int index = _lcdLines.IndexOf(oldLine);

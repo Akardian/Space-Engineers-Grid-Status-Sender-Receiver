@@ -23,14 +23,18 @@ namespace IngameScript
     {
         public class Receiver
         {
+            private const int ReservedLCDLines = 5;
+
             private readonly Dictionary<string,LCDUtil> _lcdUtil;
             private readonly List<SenderEntity> _senderList;
 
             private readonly GridCommunication _gridCommunication;
             private readonly int _maxSenderOnLCD;
+            private readonly int _maxSender;
             private readonly int _timeoutTime;
 
             private int _checkConnection;
+            private bool _maxSenderReached;
 
             private readonly Program _program;
 
@@ -55,12 +59,15 @@ namespace IngameScript
                         newLCD.Add(lcd.Value);
                         newLCD.TextContentOn();
                         newLCD.SetFont(LCDUtil.FontColor.Green, 1f);
-                        newLCD.Header = $"-- Receiver --\n";
+                        newLCD.Header = $"-- Receiver --";
                         newLCD.Update();
 
                         _lcdUtil.Add(lcd.Value, newLCD);
                     }
                 }
+
+                _maxSender = _maxSenderOnLCD * _lcdUtil.Count;
+                _maxSenderReached = false;
             }
 
             public void Run()
@@ -75,7 +82,16 @@ namespace IngameScript
 
                     if (senderEntity == null)
                     {
-                        AddSender(msg);
+                        if(_senderList.Count < _maxSender)
+                        {
+                            AddSender(msg);
+                        } else if (!_maxSenderReached)
+                        {
+                            _program.Echo($"ERROR: Max Sender space reached {_senderList.Count}");
+                            _maxSenderReached = true;
+                            return;
+                        }
+                        
                     } else
                     {
                         UpdateSender(msg, senderEntity);
@@ -137,7 +153,8 @@ namespace IngameScript
                     msg.TimeStamp,
                     lcd.Value,
                     SenderEntity.Status.Connected,
-                    lcd.Value.ReserveLines(5)));
+                    lcd.Value.ReserveLines(ReservedLCDLines)));
+
                     lcd.Value.Update();
                 }
             }
@@ -147,8 +164,8 @@ namespace IngameScript
                 string connectionStatus = CheckConnection();
                 sender.LastUpdate = msg.TimeStamp;
 
-                sender.LCD.Write(sender.LineNumber[1], "TimeStamp: " + msg.TimeStamp.ToString());
-                sender.LCD.Write(sender.LineNumber[2], "Sender Name: " + msg.SenderName);
+                sender.LCD.Write(sender.LineNumber[1], $"TimeStamp: {msg.TimeStamp.ToString()}");
+                sender.LCD.Write(sender.LineNumber[2], $"Sender Name: {msg.SenderName}");
                 sender.LCD.Write(sender.LineNumber[3], $"Status: {connectionStatus}");
                 sender.LCD.Write(sender.LineNumber[4], $"B: {msg.CurrentBatteryPower} H: {msg.CurrentHydrogen}");
                 sender.LCD.Update();

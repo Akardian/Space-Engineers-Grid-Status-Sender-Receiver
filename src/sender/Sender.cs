@@ -23,14 +23,15 @@ namespace IngameScript
     {
         public class Sender
         {
-            private GridCommunication _gridCommunication;
+            private const int ReservedLCDLines = 8;
+
+            private readonly GridCommunication _gridCommunication;
 
             private readonly LCDUtil _lcdUtil;
 
             private readonly BatteryStatus _batteryStatus;
             private readonly HydrogenTankStatus _hydrogenTankStatus;
 
-            private int _count;
             private readonly string _senderName;
             private readonly int[] _lineLocation;
 
@@ -39,7 +40,6 @@ namespace IngameScript
             {
                 _program = program;
 
-                _count = 0;
                 _senderName = ini.Data.SenderName;
 
                 _gridCommunication = new GridCommunication(_program, GridCommunication.ClientType.Sender, ini.Data.Channel);
@@ -49,7 +49,7 @@ namespace IngameScript
                 _lcdUtil.TextContentOn();
                 _lcdUtil.SetFont(LCDUtil.FontColor.Green, 1f);
                 _lcdUtil.Header = $"-- Sender --\n";
-                _lineLocation = _lcdUtil.ReserveLines(6);
+                _lineLocation = _lcdUtil.ReserveLines(ReservedLCDLines);
 
                 _batteryStatus = new BatteryStatus(_program);
                 _hydrogenTankStatus = new HydrogenTankStatus(_program, ini.Data);
@@ -66,15 +66,13 @@ namespace IngameScript
 
                 _gridCommunication.Send(msgNew);
 
-                _lcdUtil.Write(_lineLocation[0], "Timestamp: " + msgNew.TimeStamp.ToString());
-                _lcdUtil.Write(_lineLocation[1], "My Name: " + _senderName);
-                _lcdUtil.Write(_lineLocation[3], "Battery Status: " + _batteryStatus.CurrentStoredPower() + " MWh");
-                _lcdUtil.Write(_lineLocation[2], "Max Battery Power: " + _batteryStatus.MaxStoredPower + " MWh");
-                _lcdUtil.Write(_lineLocation[5], "Current Capacity: " + _hydrogenTankStatus.CheckCapacity() + " L");
-                _lcdUtil.Write(_lineLocation[4], "Max Capacity: " + _hydrogenTankStatus.MaxCapacity + " L");
+                _lcdUtil.Write(_lineLocation[0], $"Timestamp: {msgNew.TimeStamp.ToString()}");
+                _lcdUtil.Write(_lineLocation[1], $"My Name: {msgNew.SenderName}");
+                _lcdUtil.Write(_lineLocation[3], $"Max Battery Power: {msgNew.MaxBatteryPower} MWh");
+                _lcdUtil.Write(_lineLocation[4], $"Battery Status: {msgNew.CurrentBatteryPower} MWh");
+                _lcdUtil.Write(_lineLocation[6], $"Max Capacity: {msgNew.MaxHydrogen} L");
+                _lcdUtil.Write(_lineLocation[7], $"Current Capacity: {msgNew.CurrentHydrogen} L");
                 _lcdUtil.Update();
-
-                _count++;
             }
         }
     }
