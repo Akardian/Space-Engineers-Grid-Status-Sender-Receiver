@@ -23,8 +23,6 @@ namespace IngameScript
     {
         public class Receiver
         {
-            private const int ReservedLCDLines = 5;
-
             private readonly Dictionary<string,LCDUtil> _lcdUtil;
             private readonly List<SenderEntity> _senderList;
 
@@ -37,6 +35,12 @@ namespace IngameScript
             private bool _maxSenderReached;
 
             private readonly Program _program;
+
+            private const int ReservedLCDLines = 5;
+            private const int LINE_TIMESTAMP = 1;
+            private const int LINE_SENDER_NAME = 2;
+            private const int LINE_CONNECTION = 3;
+            private const int LINE_STATUS = 4;
 
             public Receiver(Program program, CustomDataIni ini)
             {
@@ -52,13 +56,12 @@ namespace IngameScript
 
                 foreach (KeyValuePair<string, string> lcd in ini.Data.LcdOutputList)
                 {
-                    _program.Echo($"Output LCD: {lcd.Key}, {lcd.Value}");
                     if (!_lcdUtil.ContainsKey(lcd.Value))
                     {
                         LCDUtil newLCD = new LCDUtil(_program, "");
                         newLCD.Add(lcd.Value);
                         newLCD.TextContentOn();
-                        newLCD.SetFont(LCDUtil.FontColor.Green, 1f);
+                        newLCD.SetDefaultFont(LCDUtil.FontColor.Green, 1f);
                         newLCD.Header = $"-- Receiver --";
                         newLCD.Update();
 
@@ -106,29 +109,27 @@ namespace IngameScript
                 }
             }
 
-            private string CheckConnection()
+            private void CheckConnection()
             {
                 if(_senderList.Count <= _checkConnection)
                 {
                     _checkConnection = 0;
                 }
+                
                 SenderEntity sender = _senderList[_checkConnection];
-
-                string connectionStatus;
                 Double time = Math.Abs((DateTime.Now - sender.LastUpdate).TotalSeconds);
                 if (time > _timeoutTime)
                 {
-                    sender.CurrentStatus = SenderEntity.Status.LostConnection;
-                    connectionStatus = "Lost Connection";
+                    sender.CurrentStatus = SenderEntity.Status.Disconnected;
+                    sender.LCD.Write(sender.LineNumber[LINE_CONNECTION], $"Status: {sender.CurrentStatus}");
+                    sender.LCD.Update();
                 }
                 else
                 {
                     sender.CurrentStatus = SenderEntity.Status.Connected;
-                    connectionStatus = "Connected";
                 }
-                _checkConnection++;
 
-                return connectionStatus;
+                _checkConnection++;
             }
 
             private void AddSender(MessageEntity msg)
@@ -161,13 +162,13 @@ namespace IngameScript
 
             private void UpdateSender(MessageEntity msg, SenderEntity sender)
             {
-                string connectionStatus = CheckConnection();
                 sender.LastUpdate = msg.TimeStamp;
+                sender.CurrentStatus = SenderEntity.Status.Connected;
 
-                sender.LCD.Write(sender.LineNumber[1], $"TimeStamp: {msg.TimeStamp.ToString()}");
-                sender.LCD.Write(sender.LineNumber[2], $"Sender Name: {msg.SenderName}");
-                sender.LCD.Write(sender.LineNumber[3], $"Status: {connectionStatus}");
-                sender.LCD.Write(sender.LineNumber[4], $"B: {msg.CurrentBatteryPower} H: {msg.CurrentHydrogen}");
+                sender.LCD.Write(sender.LineNumber[LINE_TIMESTAMP], $"TimeStamp: {msg.TimeStamp.ToString()}");
+                sender.LCD.Write(sender.LineNumber[LINE_SENDER_NAME], $"Sender Name: {msg.SenderName}");
+                sender.LCD.Write(sender.LineNumber[LINE_CONNECTION], $"Status: {sender.CurrentStatus}");
+                sender.LCD.Write(sender.LineNumber[LINE_STATUS], $"B: {msg.CurrentBatteryPower} H: {msg.CurrentHydrogen}");
                 sender.LCD.Update();
             }
         }

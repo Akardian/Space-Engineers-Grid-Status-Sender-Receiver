@@ -34,6 +34,7 @@ namespace IngameScript
             private readonly Program _program;
             public enum FontColor : byte { Green, Red, Blue }
 
+            public LCDUtil(Program program) : this(program, "") { }
             public LCDUtil (Program program, string header)
             {
                 _program = program;
@@ -44,19 +45,17 @@ namespace IngameScript
                 Header = header;
                 SenderCount = 0;
             }
-            public LCDUtil(Program program) : this(program, "") { }
-
-            public void Set(string lcdName)
+            
+            public void Clear()
             {
                 _lcdList.Clear();
-                Add(lcdName);
+                _lcdLines.Clear();
             }
 
             public void Add(List<KeyValuePair<string, string>> lcdNameList)
             {
                 foreach(KeyValuePair<string, string> lcdName in lcdNameList)
                 {
-                    _program.Echo($"LCDUtil: Add output LCD:{lcdName.Value}");
                     Add(lcdName.Value);
                 }
             }
@@ -69,12 +68,12 @@ namespace IngameScript
                 {
                     if (lcd != null && lcd.IsSameConstructAs(_program.Me))
                     {
-                        
+                        _program.Echo($"Output LCD: {lcdName}");
                         _lcdList.Add(_program.GridTerminalSystem.GetBlockWithId(lcd.EntityId) as IMyTextPanel);
                     }
                     else
                     {
-                        _program.Echo($"LCDUtil: LCD Not found: {lcdName}");
+                        _program.Echo($"LCD Not found: {lcdName}");
                     }
                 }
             }
@@ -87,23 +86,23 @@ namespace IngameScript
                 }
             }
 
-            public void SetFont(FontColor color, float fontSize)
+            public void SetDefaultFont(FontColor color, float fontSize)
             {
                 switch(color)
                 {
                     case FontColor.Blue:
-                        SetFont(new Color(0, 0, 0, 255), new Color(0, 0, 255, 255), fontSize);
+                        SetFontColor(new Color(0, 0, 0, 255), new Color(0, 0, 255, 255), fontSize);
                         break;
                     case FontColor.Green:
-                        SetFont(new Color(0, 0, 0, 255), new Color(0, 255, 0, 255), fontSize);
+                        SetFontColor(new Color(0, 0, 0, 255), new Color(0, 255, 0, 255), fontSize);
                         break;
                     case FontColor.Red:
-                        SetFont(new Color(0, 0, 0, 255), new Color(255, 0, 0, 255), fontSize);
+                        SetFontColor(new Color(0, 0, 0, 255), new Color(255, 0, 0, 255), fontSize);
                         break;
                 }
             }   
 
-            public void SetFont(Color backroundColor, Color fontColor, float fontSize)
+            public void SetFontColor(Color backroundColor, Color fontColor, float fontSize)
             {
                 foreach (IMyTextPanel lcd in _lcdList)
                 {
@@ -116,12 +115,15 @@ namespace IngameScript
             public int[] ReserveLines(int count)
             {
                 int[] lineIndex = new int[count];
-               for(int i = 0; i < count; i++)
-               {
+                string debugText = "";
+                for(int i = 0; i < count; i++)
+                {
                     _lcdLines.Add("");
                     lineIndex[i] = _lcdLines.Count() - 1;
-               }
+                    debugText += $"{lineIndex[i]}, ";
+                }
 
+                _program.Echo($"Reserverd Lines: {debugText}");
                 return lineIndex;
             }
 
@@ -159,11 +161,11 @@ namespace IngameScript
 
             public void Update()
             {
-                string msg = Header + "\n";
+                string msg = $"{Header}\n";
 
                 foreach(string line in _lcdLines)
                 {
-                    msg += line + "\n";
+                    msg += $"{line}\n";
                 }
 
                 Echo(msg, false);

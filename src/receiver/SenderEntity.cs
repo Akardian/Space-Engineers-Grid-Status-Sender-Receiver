@@ -29,7 +29,7 @@ namespace IngameScript
             public LCDUtil LCD { get; set; }
             public int[] LineNumber { get; private set; }
 
-            public enum Status : byte { Connected, LostConnection }
+            public enum Status : byte { Connected, Disconnected }
 
             public SenderEntity(long id, DateTime lastUpdate, LCDUtil lcd, Status status, int[] lineNumber)
             {

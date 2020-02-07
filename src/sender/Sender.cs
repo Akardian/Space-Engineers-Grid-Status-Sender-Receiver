@@ -47,7 +47,7 @@ namespace IngameScript
                 _lcdUtil = new LCDUtil(_program);
                 _lcdUtil.Add(ini.Data.LcdOutputList);
                 _lcdUtil.TextContentOn();
-                _lcdUtil.SetFont(LCDUtil.FontColor.Green, 1f);
+                _lcdUtil.SetDefaultFont(LCDUtil.FontColor.Green, 1f);
                 _lcdUtil.Header = $"-- Sender --\n";
                 _lineLocation = _lcdUtil.ReserveLines(ReservedLCDLines);
 
