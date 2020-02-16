@@ -21,166 +21,100 @@ namespace IngameScript
 {
     partial class Program
     {
-        public class LCDUtil
+        public abstract class LCDUtil
         {
-            public string Header { get; set; }
-            public string ID { get; private set; }
-            public int SenderCount { get; set; }
+            public List<LCDEntity> LcdEntitys { get; private set; }
 
-            private readonly List<IMyTextPanel> _lcdList;
-            private readonly List<string> _lcdLines;
+            protected readonly Program _program;
             private readonly List<IMyTerminalBlock> _searchLCD;
 
-            private readonly Program _program;
             public enum FontColor : byte { Green, Red, Blue }
 
-            public LCDUtil(Program program) : this(program, "") { }
-            public LCDUtil (Program program, string header)
+            public LCDUtil (Program program)
             {
                 _program = program;
-                _lcdList = new List<IMyTextPanel>();
-                _lcdLines = new List<string>();
-                _searchLCD = new List<IMyTerminalBlock>();
 
-                Header = header;
-                SenderCount = 0;
+                LcdEntitys = new List<LCDEntity>();
+                
+                _searchLCD = new List<IMyTerminalBlock>();
             }
             
-            public void Clear()
+            public void ClearLCD()
             {
-                _lcdList.Clear();
-                _lcdLines.Clear();
+                LcdEntitys.Clear();
             }
 
-            public void Add(List<KeyValuePair<string, string>> lcdNameList)
+            public void AddLCD(List<KeyValuePair<string, string>> lcdNameList)
             {
                 foreach(KeyValuePair<string, string> lcdName in lcdNameList)
                 {
-                    Add(lcdName.Value);
+                    AddLCD(lcdName.Value);
                 }
             }
 
-            public void Add(string lcdName) 
+            public void AddLCD(string lcdName) 
             {
+                LCDEntity newEntity = new LCDEntity(_program);
+
                 _searchLCD.Clear();
                 _program.GridTerminalSystem.SearchBlocksOfName(lcdName, _searchLCD);
                 foreach (IMyTerminalBlock lcd in _searchLCD)
                 {
-                    if (lcd != null && lcd.IsSameConstructAs(_program.Me))
+                    if (lcd != null && lcd.IsSameConstructAs(_program.Me) && lcd is IMyTextSurface)
                     {
-                        _program.Echo($"Output LCD: {lcdName}");
-                        _lcdList.Add(_program.GridTerminalSystem.GetBlockWithId(lcd.EntityId) as IMyTextPanel);
+                        _program.Echo($"New LCD: {lcdName}");
+
+                        newEntity.Add((IMyTextSurface)lcd);
                     }
-                    else
+                    else if(lcd == null || !lcd.IsSameConstructAs(_program.Me))
                     {
-                        _program.Echo($"LCD Not found: {lcdName}");
+                        _program.Echo($"ERROR: LCD [{lcdName}] not found");
+                    } else
+                    {
+                        _program.Echo($"ERROR: Block [{lcdName}] is not a TextSurface");
                     }
                 }
+                LcdEntitys.Add(newEntity);
             }
 
-            public void TextContentOn()
+            public void TextContentOn(ContentType type)
             {
-                foreach (IMyTextPanel lcd in _lcdList)
+                foreach (LCDEntity lcd in LcdEntitys)
                 {
-                    lcd.ContentType = ContentType.TEXT_AND_IMAGE;
+                    foreach(SurfaceEntity surface in lcd.Surfaces)
+                    {
+                        surface.Surface.ContentType = type;
+                    }
                 }
             }
+            public void TextContentOn() { TextContentOn(ContentType.TEXT_AND_IMAGE); }
 
-            public void SetDefaultFont(FontColor color, float fontSize)
+            public void SetDefaultFont(FontColor color)
             {
                 switch(color)
                 {
                     case FontColor.Blue:
-                        SetFontColor(new Color(0, 0, 0, 255), new Color(0, 0, 255, 255), fontSize);
+                        SetFont(new Color(0, 0, 0, 255), new Color(0, 0, 255, 255), 1F);
                         break;
                     case FontColor.Green:
-                        SetFontColor(new Color(0, 0, 0, 255), new Color(0, 255, 0, 255), fontSize);
+                        SetFont(new Color(0, 0, 0, 255), new Color(0, 255, 0, 255), 1F);
                         break;
                     case FontColor.Red:
-                        SetFontColor(new Color(0, 0, 0, 255), new Color(255, 0, 0, 255), fontSize);
+                        SetFont(new Color(0, 0, 0, 255), new Color(255, 0, 0, 255), 1F);
                         break;
                 }
             }   
 
-            public void SetFontColor(Color backroundColor, Color fontColor, float fontSize)
+            public void SetFont(Color backroundColor, Color fontColor, float fontSize)
             {
-                foreach (IMyTextPanel lcd in _lcdList)
+                foreach (LCDEntity lcd in LcdEntitys)
                 {
-                    lcd.BackgroundColor = backroundColor;
-                    lcd.FontColor = fontColor;
-                    lcd.FontSize = fontSize;
-                }
-            }
-
-            public int[] ReserveLines(int count)
-            {
-                int[] lineIndex = new int[count];
-                string debugText = "";
-                for(int i = 0; i < count; i++)
-                {
-                    _lcdLines.Add("");
-                    lineIndex[i] = _lcdLines.Count() - 1;
-                    debugText += $"{lineIndex[i]}, ";
-                }
-
-                _program.Echo($"Reserverd Lines: {debugText}");
-                return lineIndex;
-            }
-
-            public void Remove(string line)
-            {
-                _lcdLines.Remove(line);
-            }
-
-            public void RemoveAt(int index)
-            {
-                _lcdLines.RemoveAt(index);
-            }
-
-            public int Write(string oldLine, string newLine)
-            {
-                int index = _lcdLines.IndexOf(oldLine);
-                index = Write(index, newLine);
-
-                return index;
-            }
-
-            public int Write(int index, string newLine)
-            {
-                if(_lcdLines.Count >= 0 && _lcdLines.Count > index)
-                {
-                    _lcdLines[index] = newLine;
-                }
-                else
-                {
-                    _lcdLines.Add(newLine);
-                    index = _lcdLines.Count() - 1;
-                }
-                return index;
-            }
-
-            public void Update()
-            {
-                string msg = $"{Header}\n";
-
-                foreach(string line in _lcdLines)
-                {
-                    msg += $"{line}\n";
-                }
-
-                Echo(msg, false);
-            }
-             
-            public void Echo(string msg)
-            {
-                Echo(msg, true);
-            }
-
-            public void Echo(string msg, bool append)
-            {
-                foreach(IMyTextPanel lcd in _lcdList)
-                {
-                    lcd?.WriteText($"{msg}\n", append);
+                    foreach (SurfaceEntity surface in lcd.Surfaces)
+                    {
+                        surface.Surface.BackgroundColor = backroundColor;
+                        surface.Surface.FontColor = fontColor;
+                        surface.Surface.FontSize = fontSize;
+                    }
                 }
             }
         }

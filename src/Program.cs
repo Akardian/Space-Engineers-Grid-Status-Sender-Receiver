@@ -22,7 +22,7 @@ namespace IngameScript
     {
         private const UpdateType COMMAND_UPDATE = UpdateType.Trigger | UpdateType.Terminal;
 
-        private LCDUtil _debug;
+        private LCDText _debug;
 
         private CustomDataIni _ini;
 
@@ -55,10 +55,10 @@ namespace IngameScript
                     throw new Exception($"Exception: Could not save to custom data\n---");
                 }
 
-                _debug = new LCDUtil(this);
-                _debug.Add(_ini.Data.DebugLCD);
+                _debug = new LCDText(this);
+                _debug.AddLCD(_ini.Data.DebugLCD);
                 _debug.TextContentOn();
-                _debug.SetDefaultFont(LCDUtil.FontColor.Green, 1f);
+                _debug.SetDefaultFont(LCDUtil.FontColor.Green);
                 _debug.Echo("", false);
 
                 Echo = _debug.Echo;

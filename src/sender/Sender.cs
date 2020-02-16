@@ -27,7 +27,7 @@ namespace IngameScript
 
             private readonly GridCommunication _gridCommunication;
 
-            private readonly LCDUtil _lcdUtil;
+            private readonly LCDText _lcdUtil;
 
             private readonly BatteryStatus _batteryStatus;
             private readonly HydrogenTankStatus _hydrogenTankStatus;
@@ -44,12 +44,11 @@ namespace IngameScript
 
                 _gridCommunication = new GridCommunication(_program, GridCommunication.ClientType.Sender, ini.Data.Channel);
 
-                _lcdUtil = new LCDUtil(_program);
-                _lcdUtil.Add(ini.Data.LcdOutputList);
+                _lcdUtil = new LCDText(_program, $"-- Sender --\n");
+                _lcdUtil.AddLCD(ini.Data.LcdOutputList);
                 _lcdUtil.TextContentOn();
-                _lcdUtil.SetDefaultFont(LCDUtil.FontColor.Green, 1f);
-                _lcdUtil.Header = $"-- Sender --\n";
-                _lineLocation = _lcdUtil.ReserveLines(ReservedLCDLines);
+                _lcdUtil.SetDefaultFont(LCDUtil.FontColor.Green);
+                _lineLocation = _lcdUtil.ReserveLCD(ReservedLCDLines).Item2;
 
                 _batteryStatus = new BatteryStatus(_program);
                 _hydrogenTankStatus = new HydrogenTankStatus(_program, ini.Data);
