@@ -46,8 +46,8 @@ namespace IngameScript
 
                 _lcdUtil = new LCDText(_program, $"-- Sender --\n");
                 _lcdUtil.AddLCD(ini.Data.LcdOutputList);
-                _lcdUtil.TextContentOn();
-                _lcdUtil.SetDefaultFont(LCDUtil.FontColor.Green);
+                _lcdUtil.SetLCDContent(ContentType.TEXT_AND_IMAGE);
+                _lcdUtil.SetDefaultFont(LCDText.FontColor.Green);
                 _lineLocation = _lcdUtil.ReserveLCD(ReservedLCDLines).Item2;
 
                 _batteryStatus = new BatteryStatus(_program);

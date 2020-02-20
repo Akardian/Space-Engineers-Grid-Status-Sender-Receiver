@@ -27,16 +27,17 @@ namespace IngameScript
 
             protected readonly Program _program;
             private readonly List<IMyTerminalBlock> _searchLCD;
+            private readonly List<IMyTextSurface> _searchSurface;
 
             public enum FontColor : byte { Green, Red, Blue }
 
             public LCDUtil (Program program)
             {
-                _program = program;
-
                 LcdEntitys = new List<LCDEntity>();
-                
+
+                _program = program;
                 _searchLCD = new List<IMyTerminalBlock>();
+                _searchSurface = new List<IMyTextSurface>();
             }
             
             public void ClearLCD()
@@ -52,10 +53,11 @@ namespace IngameScript
                 }
             }
 
+            public abstract void AddSurfaceToEntity(List<IMyTextSurface> lcdList);
+
             public void AddLCD(string lcdName) 
             {
-                LCDEntity newEntity = new LCDEntity(_program);
-
+                _searchSurface.Clear();
                 _searchLCD.Clear();
                 _program.GridTerminalSystem.SearchBlocksOfName(lcdName, _searchLCD);
                 foreach (IMyTerminalBlock lcd in _searchLCD)
@@ -64,20 +66,21 @@ namespace IngameScript
                     {
                         _program.Echo($"New LCD: {lcdName}");
 
-                        newEntity.Add((IMyTextSurface)lcd);
+                        _searchSurface.Add((IMyTextSurface)lcd);
                     }
-                    else if(lcd == null || !lcd.IsSameConstructAs(_program.Me))
+                    else if (lcd == null || !lcd.IsSameConstructAs(_program.Me))
                     {
                         _program.Echo($"ERROR: LCD [{lcdName}] not found");
-                    } else
+                    }
+                    else
                     {
                         _program.Echo($"ERROR: Block [{lcdName}] is not a TextSurface");
                     }
                 }
-                LcdEntitys.Add(newEntity);
+                AddSurfaceToEntity(_searchSurface);
             }
 
-            public void TextContentOn(ContentType type)
+            public void SetLCDContent(ContentType type)
             {
                 foreach (LCDEntity lcd in LcdEntitys)
                 {
@@ -87,7 +90,6 @@ namespace IngameScript
                     }
                 }
             }
-            public void TextContentOn() { TextContentOn(ContentType.TEXT_AND_IMAGE); }
 
             public void SetDefaultFont(FontColor color)
             {
@@ -107,7 +109,7 @@ namespace IngameScript
 
             public void SetFont(Color backroundColor, Color fontColor, float fontSize)
             {
-                foreach (LCDEntity lcd in LcdEntitys)
+                foreach (LCDDrawEntity lcd in LcdEntitys)
                 {
                     foreach (SurfaceEntity surface in lcd.Surfaces)
                     {

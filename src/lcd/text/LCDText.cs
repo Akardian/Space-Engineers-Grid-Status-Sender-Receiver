@@ -23,6 +23,7 @@ namespace IngameScript
     {
         public class LCDText : LCDUtil
         {
+            public new List<LCDTextEntity> LcdEntitys { get; private set; }
             public string Header { get; set; }
             public int MaxLines { get; private set; }
 
@@ -32,21 +33,32 @@ namespace IngameScript
             {
                 Header = header;
                 MaxLines = maxLines;
+
+                LcdEntitys = new List<LCDTextEntity>();
+            }
+
+            public override void AddSurfaceToEntity(List<IMyTextSurface> lcdList)
+            {
+                LCDTextEntity newEntity = new LCDTextEntity(_program);
+                foreach (IMyTextSurface lcd in lcdList)
+                {
+                    newEntity.Add(lcd);
+                }
+                LcdEntitys.Add(newEntity);
             }
 
             public void Update()
             {
-                foreach (LCDEntity entity in LcdEntitys)
+                foreach (LCDTextEntity entity in LcdEntitys)
                 {
                     entity.Update(Header);
                 }
-   
             }
 
-            public MyTuple<LCDEntity, int[]> ReserveLCD(int lineCount)
+            public MyTuple<LCDTextEntity, int[]> ReserveLCD(int lineCount)
             {
-                LCDEntity selectedLCD = null;
-                foreach (LCDEntity entity in LcdEntitys)
+                LCDTextEntity selectedLCD = null;
+                foreach (LCDTextEntity entity in LcdEntitys)
                 {
                     if(MaxLines - entity.LcdLines.Count >= lineCount)
                     {
@@ -55,12 +67,12 @@ namespace IngameScript
                     }
                 }
 
-                return new MyTuple<LCDEntity, int[]>(selectedLCD, selectedLCD.ReserveLines(lineCount));
+                return new MyTuple<LCDTextEntity, int[]>(selectedLCD, selectedLCD.ReserveLines(lineCount));
             }
 
             public void Write(string oldLine, string newLine)
             {
-                foreach (LCDEntity entity in LcdEntitys)
+                foreach (LCDTextEntity entity in LcdEntitys)
                 {
                     entity.Write(oldLine, newLine);
                 }
@@ -68,7 +80,7 @@ namespace IngameScript
 
             public void Write(int index, string newLine)
             {
-                foreach (LCDEntity entity in LcdEntitys)
+                foreach (LCDTextEntity entity in LcdEntitys)
                 {
                     entity.Write(index, newLine);
                 }
@@ -81,7 +93,7 @@ namespace IngameScript
 
             public void Echo(string msg, bool append)
             {
-                foreach(LCDEntity entity in LcdEntitys)
+                foreach(LCDTextEntity entity in LcdEntitys)
                 {
                     entity.Echo(msg, append);
                 }

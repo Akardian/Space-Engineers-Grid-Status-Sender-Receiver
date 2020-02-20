@@ -57,7 +57,7 @@ namespace IngameScript
 
                 _debug = new LCDText(this);
                 _debug.AddLCD(_ini.Data.DebugLCD);
-                _debug.TextContentOn();
+                _debug.SetLCDContent(ContentType.TEXT_AND_IMAGE);
                 _debug.SetDefaultFont(LCDUtil.FontColor.Green);
                 _debug.Echo("", false);
 
