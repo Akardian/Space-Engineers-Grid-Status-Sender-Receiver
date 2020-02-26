@@ -23,11 +23,38 @@ namespace IngameScript
     {
         public class LCDDrawEntity : LCDEntity
         {
-            public int Count { get; set; }
+            public int Count { get; private set; }
+            public Dictionary<float, int> Position { get; private set;}
+            public Dictionary<int, List<MySprite>> Sprites { get; set; }
 
             public LCDDrawEntity(Program program) : base(program)
             {
                 Count = 0;
+                Position = new Dictionary<float, int>();
+                Sprites = new Dictionary<int, List<MySprite>>();
+            }
+
+            public int ReserveSpace(float senderID)
+            {
+                Count++;
+                Position.Add(senderID, Count);
+                return Count;
+            }
+
+            public void Draw()
+            {
+                foreach (SurfaceEntity surface in Surfaces)
+                {
+                    MySpriteDrawFrame frame = surface.Surface.DrawFrame();
+                    foreach (KeyValuePair<int, List<MySprite>> pair in Sprites)
+                    {
+                        foreach (MySprite sprite in pair.Value)
+                        {
+                            frame.Add(sprite);
+                        }
+                    }
+                    frame.Dispose();
+                }
             }
         }
     }

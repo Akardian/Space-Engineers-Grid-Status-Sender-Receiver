@@ -42,7 +42,7 @@ namespace IngameScript
 
             public Receiver(Program program, CustomDataIni ini)
             {
-                UPDATE_SENDER = UpdateSenderDraw;
+                UPDATE_SENDER = DrawNewSprite;
 
                 _program = program;
                 int maxLines = ini.Data.MaxSenderOnLCD * ReservedLCDLines;
@@ -83,8 +83,10 @@ namespace IngameScript
 
                 if (_senderList.Any())
                 {
-                    CheckConnection(UPDATE_SENDER);
+                    //CheckConnection(UPDATE_SENDER);
                 }
+
+                _lcd.UpdateDraw();
             }
 
             private void CheckConnection(Action<MessageEntity, SenderEntity> update)
@@ -113,7 +115,7 @@ namespace IngameScript
             {
                 _program.Echo($"Add Sender: {msg.SenderID} ");
 
-                MyTuple<LCDDrawEntity, int[]> lcdTuple = _lcd.ReserveLCD(ReservedLCDLines);
+                MyTuple<LCDDrawEntity, int[]> lcdTuple = _lcd.ReserveLCD(msg.SenderID);
                 if (lcdTuple.Item1 != null)
                 {
                     SenderEntity sender = new SenderEntity(
@@ -124,7 +126,6 @@ namespace IngameScript
                     lcdTuple.Item2);
 
                     _senderList.Add(sender);
-
                     update(msg, sender);
                 }
                 else
@@ -133,17 +134,18 @@ namespace IngameScript
                 }
             }
 
-            private void UpdateSenderDraw(MessageEntity msg, SenderEntity sender)
-            {
-                foreach (SurfaceEntity surface in sender.LCD.Surfaces)
-                {
-                    Vector2 position = new Vector2(20, 20) + surface.Viewport.Position;
-                    position.Y = +(80 * sender.LineNumber[0]);
+            private void DrawNewSprite(MessageEntity msg, SenderEntity sender) {
+                Vector2 position = new Vector2(20, 20) + sender.LCD.MinViewpoint.Position;
+                position.Y = +(150 * (sender.LineNumber[0] - 1));
 
-                    MySpriteDrawFrame frame = surface.Surface.DrawFrame();
-                    DrawSprites(msg, frame, surface, position);
-                    frame.Dispose();
-                } 
+                if (sender.LCD.Sprites.ContainsKey(sender.LineNumber[0]))
+                {
+                    sender.LCD.Sprites[sender.LineNumber[0]] = DrawSprites(msg, sender.LCD.MinViewpoint, position);
+                } else
+                {
+                    sender.LCD.Sprites.Add(sender.LineNumber[0], DrawSprites(msg, sender.LCD.MinViewpoint, position));
+                }
+                
             }
 
             private MySprite DrawBar(float current, float max, Vector2 surfaceSize, Vector2 position, Color color)
@@ -174,28 +176,31 @@ namespace IngameScript
                  };
             }
 
-            private void DrawSprites(MessageEntity msg, MySpriteDrawFrame frame, SurfaceEntity lcd, Vector2 position)
+            private List<MySprite> DrawSprites(MessageEntity msg, RectangleF viewport, Vector2 position)
             {
+                List<MySprite> sprite = new List<MySprite>();
                 if (msg != null)
                 {
-                   
-                    Vector2 barSize = new Vector2((lcd.Viewport.Size.X - 40), 20);
+                    Vector2 barSize = new Vector2((viewport.Size.X - 40), 20);
 
-                    frame.Add(DrawText(msg.SenderName, position, 1.0F, Color.Green));
+                    position += new Vector2(0, 10);
+                    sprite.Add(DrawText(msg.SenderName, position, 1.0F, Color.Green));
                     position += new Vector2(0, 30);
-                    frame.Add(DrawText(msg.TimeStamp.ToString(), position, 1.0F, Color.Green));
+                    sprite.Add(DrawText(msg.TimeStamp.ToString(), position, 1.0F, Color.Green));
 
                     position += new Vector2(-10, 30);
-                    Vector2 graphSize = new Vector2(lcd.Viewport.Size.X - 20, 1);
-                    frame.Add(DrawBar(100, 100, graphSize, position, Color.Aqua));
+                    Vector2 graphSize = new Vector2(viewport.Size.X - 20, 1);
+                    sprite.Add(DrawBar(100, 100, graphSize, position, Color.Aqua));
 
                     position += new Vector2(10, 15);
-                    frame.Add(DrawBar(10, 100, barSize, position, Color.Green));
+                    sprite.Add(DrawBar(10, 100, barSize, position, Color.Green));
                     position += new Vector2(0, 25);
-                    frame.Add(DrawBar(50, 100, barSize, position, Color.Green));
+                    sprite.Add(DrawBar(50, 100, barSize, position, Color.Green));
                     position += new Vector2(0, 25);
-                    frame.Add(DrawBar(100, 100, barSize, position, Color.Green));
+                    sprite.Add(DrawBar(100, 100, barSize, position, Color.Green));
                 }
+
+                return sprite;
             }
         }
     }

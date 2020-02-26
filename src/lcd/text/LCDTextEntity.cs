@@ -30,7 +30,7 @@ namespace IngameScript
                 LcdLines = new List<string>();
             }
 
-            public int[] ReserveLines(int count)
+            public int[] ReserveSpace(int count)
             {
                 int[] lineIndex = new int[count];
                 string debugText = "";

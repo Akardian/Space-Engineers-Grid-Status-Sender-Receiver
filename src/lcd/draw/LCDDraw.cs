@@ -80,22 +80,29 @@ namespace IngameScript
                     }
             }
 
-            public MyTuple<LCDDrawEntity, int[]> ReserveLCD(int lineCount)
+            public MyTuple<LCDDrawEntity, int[]> ReserveLCD(float senderID)
             {
                 int[] count = new int[] { -1 };
                 MyTuple<LCDDrawEntity, int[]> selectedLCD = new MyTuple<LCDDrawEntity, int[]>(null, count);
                 foreach (LCDDrawEntity entity in LcdEntitys)
                 {
-                    if (MaxSpace >= entity.Count)
+                    if (MaxSpace > entity.Count)
                     {
-                        entity.Count++;
-                        count[0] = entity.Count;
+                        count[0] = entity.ReserveSpace(senderID);
 
                         selectedLCD = new MyTuple<LCDDrawEntity, int[]>(entity, count);
                         break;
                     }
                 }
                 return selectedLCD;
+            }
+
+            public void UpdateDraw()
+            {
+                foreach (LCDDrawEntity lcd in LcdEntitys)
+                {
+                    lcd.Draw();
+                }
             }
         }
     }

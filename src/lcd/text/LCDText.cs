@@ -67,7 +67,7 @@ namespace IngameScript
                     }
                 }
 
-                return new MyTuple<LCDTextEntity, int[]>(selectedLCD, selectedLCD.ReserveLines(lineCount));
+                return new MyTuple<LCDTextEntity, int[]>(selectedLCD, selectedLCD.ReserveSpace(lineCount));
             }
 
             public void Write(string oldLine, string newLine)

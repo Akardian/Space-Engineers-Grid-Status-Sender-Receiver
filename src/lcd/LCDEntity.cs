@@ -24,6 +24,7 @@ namespace IngameScript
         public class LCDEntity
         {
             public List<SurfaceEntity> Surfaces { get; private set; }
+            public RectangleF MinViewpoint { get; private set; }
 
             protected readonly Program _program;
 
@@ -35,11 +36,19 @@ namespace IngameScript
 
             public void Add(IMyTextSurface surface)
             {
-                Surfaces.Add(new SurfaceEntity(
+                SurfaceEntity surfaceE = new SurfaceEntity(
                     surface, 
                     new RectangleF(
                     (surface.TextureSize - surface.SurfaceSize) / 2f,
-                    surface.SurfaceSize)));
+                    surface.SurfaceSize));
+                Surfaces.Add(surfaceE);
+
+                if(MinViewpoint.Size == new Vector2(0,0) ||
+                   (surfaceE.Viewport.Size.X + surfaceE.Viewport.Size.Y) <
+                   (MinViewpoint.Size.X + MinViewpoint.Size.Y))
+                {
+                    MinViewpoint = surfaceE.Viewport;
+                }
             }
 
             public void Echo(string msg)
