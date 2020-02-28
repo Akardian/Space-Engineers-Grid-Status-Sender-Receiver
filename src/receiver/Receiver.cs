@@ -34,18 +34,14 @@ namespace IngameScript
             private readonly Program _program;
             private readonly Action<MessageEntity, SenderEntity> UPDATE_SENDER;
 
-            private const int ReservedLCDLines = 5;
-            private const int LINE_TIMESTAMP = 1;
-            private const int LINE_SENDER_NAME = 2;
-            private const int LINE_CONNECTION = 3;
-            private const int LINE_STATUS = 4;
+            private readonly int MAX_SENDER_ON_LCD;
 
             public Receiver(Program program, CustomDataIni ini)
             {
                 UPDATE_SENDER = DrawNewSprite;
 
                 _program = program;
-                int maxLines = ini.Data.MaxSenderOnLCD * ReservedLCDLines;
+                MAX_SENDER_ON_LCD = ini.Data.MaxSenderOnLCD;
 
                 _lcd = new LCDDraw(program, ini.Data.MaxSenderOnLCD);
                 _lcd.AddLCD(ini.Data.LcdOutputList);
@@ -57,7 +53,7 @@ namespace IngameScript
                 _senderList = new List<SenderEntity>();
 
                 _timeoutTime = ini.Data.TimeOutTime;
-                _program.Echo($"TimeoutTime: {_timeoutTime}, MaxLinesOnLCD: {maxLines}");
+                _program.Echo($"TimeoutTime: {_timeoutTime}, MaxSenderOnLCD: {MAX_SENDER_ON_LCD}");
             }
 
             public void Run()
@@ -135,22 +131,21 @@ namespace IngameScript
             }
 
             private void DrawNewSprite(MessageEntity msg, SenderEntity sender) {
-                Vector2 position = new Vector2(20, 20) + sender.LCD.MinViewpoint.Position;
-                position.Y = +(150 * (sender.LineNumber[0] - 1));
+
 
                 if (sender.LCD.Sprites.ContainsKey(sender.LineNumber[0]))
                 {
-                    sender.LCD.Sprites[sender.LineNumber[0]] = DrawSprites(msg, sender.LCD.MinViewpoint, position);
+                    sender.LCD.Sprites[sender.LineNumber[0]] = DrawSprites(msg, sender.LCD.MinViewpoint, sender.LineNumber[0]);
                 } else
                 {
-                    sender.LCD.Sprites.Add(sender.LineNumber[0], DrawSprites(msg, sender.LCD.MinViewpoint, position));
+                    sender.LCD.Sprites.Add(sender.LineNumber[0], DrawSprites(msg, sender.LCD.MinViewpoint, sender.LineNumber[0]));
                 }
                 
             }
 
             private MySprite DrawBar(float current, float max, Vector2 surfaceSize, Vector2 position, Color color)
             {
-                float length = surfaceSize.X * (current / max);
+                float length = surfaceSize.X / 100 * ( current / max * 100);
                 return new MySprite()
                 {
                     Type = SpriteType.TEXTURE,
@@ -176,28 +171,40 @@ namespace IngameScript
                  };
             }
 
-            private List<MySprite> DrawSprites(MessageEntity msg, RectangleF viewport, Vector2 position)
+            private List<MySprite> DrawSprites(MessageEntity msg, RectangleF viewport, int lcdPlace)
             {
+                float yP = (viewport.Height / MAX_SENDER_ON_LCD) / 100;
+                float xP = viewport.Width / 100;
+
+                Vector2 position = viewport.Position + new Vector2(xP * 2, yP * 2);
+                position += new Vector2(0, (yP * 100) * (lcdPlace - 1));
+
                 List<MySprite> sprite = new List<MySprite>();
                 if (msg != null)
                 {
-                    Vector2 barSize = new Vector2((viewport.Size.X - 40), 20);
+                    //Draw: Name
+                    sprite.Add(DrawText(msg.SenderName, position, (yP) * 0.60F, Color.Green));
+                    position += new Vector2(0, yP * 20);
+                    //Draw: TimeStamp
+                    sprite.Add(DrawText(msg.TimeStamp.ToString(), position, (yP) * 0.60F, Color.Green));
+                    position += new Vector2(-(xP * 1), yP * 20);
+                    //Draw: Line
+                    sprite.Add(DrawBar(100, 100, new Vector2(xP * 98, 1), position, Color.Aqua));
+                    position += new Vector2(xP * 1, yP * 1);
 
-                    position += new Vector2(0, 10);
-                    sprite.Add(DrawText(msg.SenderName, position, 1.0F, Color.Green));
-                    position += new Vector2(0, 30);
-                    sprite.Add(DrawText(msg.TimeStamp.ToString(), position, 1.0F, Color.Green));
+                    // Bar length
+                    Vector2 barSize = new Vector2(xP * 61, yP * 10);
+                    //Battery Status
+                    sprite.Add(DrawText("Battery", position, (yP) * 0.60F, Color.Green));
+                    position += new Vector2(xP * 35, yP * 10);
+                    sprite.Add(DrawBar(100, 100, barSize, position, Color.Red));
+                    position += new Vector2(-(xP * 35), yP * 5);
 
-                    position += new Vector2(-10, 30);
-                    Vector2 graphSize = new Vector2(viewport.Size.X - 20, 1);
-                    sprite.Add(DrawBar(100, 100, graphSize, position, Color.Aqua));
-
-                    position += new Vector2(10, 15);
-                    sprite.Add(DrawBar(10, 100, barSize, position, Color.Green));
-                    position += new Vector2(0, 25);
-                    sprite.Add(DrawBar(50, 100, barSize, position, Color.Green));
-                    position += new Vector2(0, 25);
-                    sprite.Add(DrawBar(100, 100, barSize, position, Color.Green));
+                    //Hydro
+                    sprite.Add(DrawText("Hydrogen", position, (yP) * 0.60F, Color.Green));
+                    position += new Vector2(xP * 35, yP * 10);
+                    sprite.Add(DrawBar(100, 200, barSize, position, Color.Yellow));
+                    position += new Vector2(-(xP * 35), yP * 5);
                 }
 
                 return sprite;

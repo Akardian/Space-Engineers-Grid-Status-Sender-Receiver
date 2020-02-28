@@ -43,12 +43,14 @@ namespace IngameScript
                     surface.SurfaceSize));
                 Surfaces.Add(surfaceE);
 
-                if(MinViewpoint.Size == new Vector2(0,0) ||
-                   (surfaceE.Viewport.Size.X + surfaceE.Viewport.Size.Y) <
-                   (MinViewpoint.Size.X + MinViewpoint.Size.Y))
+                if (MinViewpoint.Height + MinViewpoint.Width == 0.0 ||
+                   (surfaceE.Viewport.Height + surfaceE.Viewport.Width) <
+                   (MinViewpoint.Height + MinViewpoint.Width))
                 {
                     MinViewpoint = surfaceE.Viewport;
-                }
+                } 
+                _program.Echo($"Viewpoint Min: {MinViewpoint.ToString()} " +
+                              $"Current: {surfaceE.Viewport.ToString()}");
             }
 
             public void Echo(string msg)

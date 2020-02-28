@@ -24,7 +24,7 @@ namespace IngameScript
         public class LCDDrawEntity : LCDEntity
         {
             public int Count { get; private set; }
-            public Dictionary<float, int> Position { get; private set;}
+            public Dictionary<float, int> Position { get; private set; }
             public Dictionary<int, List<MySprite>> Sprites { get; set; }
 
             public LCDDrawEntity(Program program) : base(program)
@@ -56,6 +56,8 @@ namespace IngameScript
                     frame.Dispose();
                 }
             }
+
+
         }
     }
 }
