@@ -132,26 +132,106 @@ namespace IngameScript
 
             private void DrawNewSprite(MessageEntity msg, SenderEntity sender) {
 
-
                 if (sender.LCD.Sprites.ContainsKey(sender.LineNumber[0]))
-                {
+                { //Change existing Sprite
                     sender.LCD.Sprites[sender.LineNumber[0]] = DrawSprites(msg, sender.LCD.MinViewpoint, sender.LineNumber[0]);
                 } else
-                {
+                { // Add new Sprite
                     sender.LCD.Sprites.Add(sender.LineNumber[0], DrawSprites(msg, sender.LCD.MinViewpoint, sender.LineNumber[0]));
                 }
                 
             }
-
-            private MySprite DrawBar(float current, float max, Vector2 surfaceSize, Vector2 position, Color color)
+ 
+            private List<MySprite> DrawSprites(MessageEntity msg, RectangleF viewport, int lcdPlace)
             {
-                float length = surfaceSize.X / 100 * ( current / max * 100);
+                //Calculate Percent
+                float yP = (viewport.Height / MAX_SENDER_ON_LCD) / 100;
+                float xP = viewport.Width / 100;
+
+                //Set Start Possition
+                Vector2 startPosition = viewport.Position + new Vector2(xP * 2, yP * 2);
+                startPosition += new Vector2(0, (yP * 100) * (lcdPlace - 1));
+
+                List<MySprite> sprite = new List<MySprite>();
+                if (msg != null)
+                {
+                    sprite = DrawConnection(startPosition, msg, xP, yP);
+                }
+
+                return sprite;
+            }
+
+            public List<MySprite> DrawConnection(Vector2 position, MessageEntity msg, float xP, float yP)
+            {
+                // Bar length
+                Vector2 barSize = new Vector2(xP * 55, yP * 10);
+                List<MySprite> sprite = new List<MySprite>
+                {
+                    //Draw: Name
+                    DrawText(msg.SenderName,
+                                    position + new Vector2(0, 0),
+                                    (yP * 0.4F),
+                                    Color.Green),
+                    //Draw: TimeStamp
+                    DrawText(msg.TimeStamp.ToString(),
+                                    position + new Vector2(0, yP * 10),
+                                    (yP * 0.35F),
+                                    Color.Green),
+                    //Draw: Line
+                    DrawBar(100, 100,
+                                    new Vector2(xP * 96, 1),
+                                    position + new Vector2(0, yP * 20),
+                                    Color.Aqua),
+                
+
+                    //Battery Status
+                    DrawText("Battery",
+                                    position + new Vector2(0, yP * 20),
+                                    (yP * 0.35F),
+                                    Color.Green),
+                    DrawBar( msg.CurrentBatteryPower, msg.MaxBatteryPower,
+                                    barSize,
+                                    position + new Vector2((xP * 96 - barSize.X), yP * 25),
+                                    Color.Red),
+
+                     //Hydro
+                    DrawText("Hydrogen",
+                                    position + new Vector2(0, yP * 31),
+                                    (yP * 0.35F),
+                                    Color.Green),
+                    DrawBar( msg.CurrentHydrogen, msg.MaxHydrogen,
+                                    barSize,
+                                    position + new Vector2((xP * 96 - barSize.X), yP * 36),
+                                    Color.Yellow),
+
+                    //Draw: BarGrid
+                    DrawBar(100, 100,
+                                    new Vector2(1, yP * 35),
+                                    position + new Vector2((xP * 96 - barSize.X), yP * 20 + (yP * 17.5F)),
+                                    Color.Aqua),
+                    DrawBar(100, 100,
+                                    new Vector2(1, yP * 35),
+                                    position + new Vector2((xP * 96 - barSize.X) + (barSize.X / 2), yP * 20 + (yP * 17.5F)),
+                                    Color.Aqua),
+                    DrawBar(100, 100,
+                                    new Vector2(1, yP * 35),
+                                    position + new Vector2((xP * 96 - barSize.X) + barSize.X, yP * 20 + (yP * 17.5F)),
+                                    Color.Aqua)
+                };
+
+                return sprite;
+            }
+
+            private MySprite DrawBar(double current, double max, Vector2 surfaceSize, Vector2 position, Color color)
+            {
+                float x = surfaceSize.X / 100.0F * (float)(current / max * 100.0F);
+
                 return new MySprite()
                 {
                     Type = SpriteType.TEXTURE,
                     Data = "White screen",
                     Position = position,
-                    Size = new Vector2(length, surfaceSize.Y),
+                    Size = new Vector2(x, surfaceSize.Y),
                     Color = color,
                     Alignment = TextAlignment.LEFT
                 };
@@ -159,55 +239,29 @@ namespace IngameScript
 
             private MySprite DrawText(string msg, Vector2 position, float scale, Color color)
             {
-                 return new MySprite()
-                 {
-                     Type = SpriteType.TEXT,
-                     Data = msg,
-                     Position = position,
-                     RotationOrScale = scale,
-                     Color = color,
-                     Alignment = TextAlignment.LEFT,
-                     FontId = "White"
-                 };
+                return new MySprite()
+                {
+                    Type = SpriteType.TEXT,
+                    Data = msg,
+                    Position = position,
+                    RotationOrScale = scale,
+                    Color = color,
+                    Alignment = TextAlignment.LEFT,
+                    FontId = "White"
+                };
             }
 
-            private List<MySprite> DrawSprites(MessageEntity msg, RectangleF viewport, int lcdPlace)
+            private MySprite DrawSprite(string sprite, Vector2 size, Vector2 position, Color color)
             {
-                float yP = (viewport.Height / MAX_SENDER_ON_LCD) / 100;
-                float xP = viewport.Width / 100;
-
-                Vector2 position = viewport.Position + new Vector2(xP * 2, yP * 2);
-                position += new Vector2(0, (yP * 100) * (lcdPlace - 1));
-
-                List<MySprite> sprite = new List<MySprite>();
-                if (msg != null)
+                return new MySprite()
                 {
-                    //Draw: Name
-                    sprite.Add(DrawText(msg.SenderName, position, (yP) * 0.60F, Color.Green));
-                    position += new Vector2(0, yP * 20);
-                    //Draw: TimeStamp
-                    sprite.Add(DrawText(msg.TimeStamp.ToString(), position, (yP) * 0.60F, Color.Green));
-                    position += new Vector2(-(xP * 1), yP * 20);
-                    //Draw: Line
-                    sprite.Add(DrawBar(100, 100, new Vector2(xP * 98, 1), position, Color.Aqua));
-                    position += new Vector2(xP * 1, yP * 1);
-
-                    // Bar length
-                    Vector2 barSize = new Vector2(xP * 61, yP * 10);
-                    //Battery Status
-                    sprite.Add(DrawText("Battery", position, (yP) * 0.60F, Color.Green));
-                    position += new Vector2(xP * 35, yP * 10);
-                    sprite.Add(DrawBar(100, 100, barSize, position, Color.Red));
-                    position += new Vector2(-(xP * 35), yP * 5);
-
-                    //Hydro
-                    sprite.Add(DrawText("Hydrogen", position, (yP) * 0.60F, Color.Green));
-                    position += new Vector2(xP * 35, yP * 10);
-                    sprite.Add(DrawBar(100, 200, barSize, position, Color.Yellow));
-                    position += new Vector2(-(xP * 35), yP * 5);
-                }
-
-                return sprite;
+                    Type = SpriteType.TEXTURE,
+                    Data = sprite,
+                    Position = position,
+                    Size = size,
+                    Color = color,
+                    Alignment = TextAlignment.LEFT,
+                };
             }
         }
     }
